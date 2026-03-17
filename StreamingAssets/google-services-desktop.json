@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "319058865898",
+    "firebase_url": "https://anki-71f4f-default-rtdb.firebaseio.com",
+    "project_id": "anki-71f4f",
+    "storage_bucket": "anki-71f4f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:319058865898:android:43c1f5d3b837b70e203193",
+        "android_client_info": {
+          "package_name": "com.Thurgh.Anki"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "319058865898-90d8dd716usoielq7vcrh9jrnq2m8l8h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAk1WGrqE9bJ-cOmhdR_U3ZVs4kguiS3T4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "319058865898-90d8dd716usoielq7vcrh9jrnq2m8l8h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
