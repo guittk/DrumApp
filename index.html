@@ -8,7 +8,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#09090F;--surface:#12121C;--card:#1C1C2A;--border:#252535;
-  --text:#E8E2D0;--muted:#6B6B84;--accent:#7C5CFC;--fs:18px;
+  --text:#E8E2D0;--muted:#6B6B84;--accent:#7C5CFC;
+  --fs:16px; /* font size controlled by A+/A- */
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
@@ -45,7 +46,7 @@ input{font-family:inherit}
 .list-head-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .list-title{font-size:16px;font-weight:700;flex:1;color:var(--text)}
 .pill-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;
-  border:1.5px solid var(--border);color:var(--muted);transition:all .18s;letter-spacing:.2px}
+  border:1.5px solid var(--border);color:var(--muted);transition:all .18s}
 .pill-btn:hover{border-color:var(--muted);color:var(--text)}
 .pill-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .search-wrap{position:relative}
@@ -56,7 +57,7 @@ input{font-family:inherit}
   font-size:14px;outline:none;transition:border-color .15s}
 .search-in:focus{border-color:var(--accent)}
 #song-list{flex:1;overflow-y:auto}
-.song-item{display:flex;align-items:center;gap:0;padding:13px 16px;
+.song-item{display:flex;align-items:center;padding:13px 16px;
   cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
 .song-item:hover{background:rgba(255,255,255,.04)}
 .song-info{flex:1;min-width:0}
@@ -74,7 +75,7 @@ input{font-family:inherit}
 .empty-msg{text-align:center;padding:60px 24px;color:var(--muted);
   font-size:14px;line-height:2}
 
-/* ── SONG VIEW ───────────────────────────────────── */
+/* ── SONG SCREEN ─────────────────────────────────── */
 #screen-song{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .song-hd{padding:10px 14px;background:var(--surface);
   border-bottom:1px solid var(--border);flex-shrink:0;
@@ -88,59 +89,75 @@ input{font-family:inherit}
 .hd-fav-btn{font-size:20px;padding:2px 6px;color:var(--muted);
   flex-shrink:0;transition:color .15s}
 .hd-fav-btn.active{color:#EAB308}
-.font-grp{display:flex;gap:3px;flex-shrink:0}
+.font-grp{display:flex;align-items:center;gap:3px;flex-shrink:0}
 .font-btn{width:30px;height:28px;border-radius:5px;font-size:13px;font-weight:700;
-  background:var(--card);border:1px solid var(--border);transition:background .12s}
+  background:var(--card);border:1px solid var(--border);transition:background .12s;
+  line-height:1}
 .font-btn:hover{background:var(--border)}
+.font-size-label{font-size:11px;color:var(--muted);min-width:28px;
+  text-align:center;font-variant-numeric:tabular-nums}
 
 /* Legend strip */
 .legend-strip{display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px;
   background:var(--surface);border-bottom:1px solid var(--border);
-  flex-shrink:0;min-height:32px;align-items:center}
+  flex-shrink:0;align-items:center}
 .leg-pill{display:flex;align-items:center;gap:4px;padding:2px 7px;
   border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.3px}
 .leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
-/* Song body - EXCEL-LIKE flat rows */
-#song-body{flex:1;overflow-y:auto;overflow-x:hidden}
+/* ────────────────────────────────────────────────────
+   SONG BODY — Excel-faithful structure, dark design
+─────────────────────────────────────────────────────── */
+#song-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  background:#0B0B12;
+  font-size:var(--fs);
+}
 #song-body::-webkit-scrollbar{width:5px}
-#song-body::-webkit-scrollbar-track{background:var(--bg)}
-#song-body::-webkit-scrollbar-thumb{background:#333}
+#song-body::-webkit-scrollbar-track{background:#0B0B12}
+#song-body::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
 
-.section{margin-bottom:6px}
+/* Song title: uses dominant song color as accent */
+.sheet-title{
+  font-size:calc(var(--fs) + 2px);
+  font-weight:700;
+  text-align:center;
+  padding:14px 16px 12px;
+  background:#0B0B12;
+  letter-spacing:.3px;
+}
 
-/* Annotation row - colored like Excel cell highlight */
-.ann-row{
-  display:flex;flex-direction:column;padding:8px 14px;
+/* Annotation row: vivid pastel bar */
+.sheet-ann{
   font-family:'Courier New',Courier,monospace;
-  font-weight:700;font-size:14px;line-height:1.5;
-  word-break:break-word;gap:1px
+  font-size:var(--fs);
+  font-weight:700;
+  padding:5px 12px;
+  line-height:1.5;
+  word-break:break-word;
 }
-.ann-type{font-weight:700}
-.ann-note{font-weight:400;font-size:13px;opacity:.88;line-height:1.4}
-.ann-sub{
-  padding:5px 14px 5px 20px;
-  font-family:'Courier New',Courier,monospace;
-  font-weight:600;font-size:13px;line-height:1.4;opacity:.9
-}
+.sheet-ann strong{font-weight:900}
 
-/* Lyric rows */
-.lyric-row{
-  padding:5px 14px;
-  font-size:var(--fs);line-height:1.75;
-  color:var(--text);background:var(--card);
-  border-left:3px solid var(--sec-color,#374151)
+/* Lyric row: dark tint of section color, light text */
+.sheet-lyric{
+  font-size:var(--fs);
+  font-weight:400;
+  padding:4px 12px 4px 14px;
+  line-height:1.6;
+  color:#E2DDD0;
+  border-left:3px solid var(--row-accent,#555);
 }
-.lyric-row:last-child{padding-bottom:6px}
+.sheet-lyric strong{font-weight:700;color:#fff}
 
-/* Spacer between sections */
-.sec-gap{height:8px;background:transparent}
+/* Empty row: just spacing, invisible */
+.sheet-empty{
+  background:#0B0B12;
+  height:calc(var(--fs) * 0.9)
+}
 
 /* ── PLAYBAR ──────────────────────────────────────── */
-.playbar{
-  background:var(--surface);border-top:1px solid var(--border);
-  padding:9px 14px;flex-shrink:0
-}
+.playbar{background:var(--surface);border-top:1px solid var(--border);
+  padding:9px 14px;flex-shrink:0}
 .pb-row{display:flex;align-items:center;gap:9px}
 .pb-stop{width:38px;height:38px;border-radius:7px;font-size:14px;
   background:var(--card);border:1px solid var(--border);
@@ -160,7 +177,7 @@ input{font-family:inherit}
 .dur-lbl{font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}
 .prog-grp{flex:1;display:flex;flex-direction:column;gap:4px}
 .prog-bar{height:7px;background:var(--border);border-radius:4px;
-  overflow:hidden;cursor:pointer;position:relative}
+  overflow:hidden;cursor:pointer}
 .prog-fill{height:100%;background:var(--accent);width:0%;
   transition:width .08s linear;border-radius:4px}
 .prog-times{display:flex;justify-content:space-between;
@@ -183,8 +200,8 @@ input{font-family:inherit}
       <span class="drop-btn">Selecionar arquivo</span>
     </div>
     <div class="up-tip">
-      Dica: renomeie o CSV para <b>musicas.csv</b> e coloque
-      na mesma pasta do <b>thurgh-sheet.html</b> — o app vai abrir sozinho.
+      Dica: renomeie o CSV para <b>musicas.csv</b> e coloque na mesma pasta
+      do <b>thurgh-sheet.html</b> — o app abre sozinho.
     </div>
     <div id="up-err"></div>
   </div>
@@ -215,15 +232,16 @@ input{font-family:inherit}
     <span class="song-hd-title" id="hd-title"></span>
     <button class="hd-fav-btn" id="hd-fav" onclick="toggleFavSong()">☆</button>
     <div class="font-grp">
-      <button class="font-btn" onclick="adjFs(-2)" title="Diminuir">−</button>
-      <button class="font-btn" onclick="adjFs(+2)" title="Aumentar">+</button>
+      <button class="font-btn" onclick="adjFs(-2)" title="Diminuir fonte">−</button>
+      <span class="font-size-label" id="fs-label">16</span>
+      <button class="font-btn" onclick="adjFs(+2)" title="Aumentar fonte">+</button>
     </div>
   </div>
   <div class="legend-strip" id="legend"></div>
   <div id="song-body"></div>
   <div class="playbar">
     <div class="pb-row">
-      <button class="pb-stop" id="stop-btn" onclick="stopPlay()" title="Reiniciar">⏮</button>
+      <button class="pb-stop" onclick="stopPlay()" title="Reiniciar">⏮</button>
       <button class="pb-play" id="play-btn" onclick="togglePlay()">▶</button>
       <div class="dur-grp">
         <input class="dur-in" id="dur-in" type="text" value="3:30">
@@ -243,78 +261,90 @@ input{font-family:inherit}
 </div>
 
 <script>
-// ── GLOBALS ────────────────────────────────────────────
+// ── STATE ──────────────────────────────────────────────
 let songs=[], favs=new Set(), cur=null;
-let fs=18, weekMode=false;
-// Playback state
+let fs=16, weekMode=false;
 let playing=false, rafId=null;
-let ps=null; // {startTime, startScroll, totalScroll, durSec, speed}
+let ps=null; // playback state: {startTime, startScroll, totalScroll, durSec, speed}
 
-// ── DRUM COLORS (matching Excel palette) ───────────────
-// Pausa          → amarelo claro
-// Marcação/Acentuação/Bumbo/Virada → salmão claro
-// Ride/Crescente/Pratos → coral/vermelho
-// Surdo/Tribal   → lilás
-// HiHat          → verde
-// Aro            → verde-amarelado
-// Caixa          → azul-ciano
+// ── DRUM COLORS ────────────────────────────────────────
 const _TX='#111';
 const COLS=[
-  {k:'hihat',     re:/hi[-\s]?hat|chimbal/i,            bg:'#33CC33',tx:_TX,label:'HiHat'},
-  {k:'pausa',     re:/\bpausa\b/i,                       bg:'#FFFF99',tx:_TX,label:'Pausa'},
-  {k:'tribal',    re:/tribal/i,                          bg:'#CC99DD',tx:_TX,label:'Tribal'},
-  {k:'surdo',     re:/\bsurdo\b/i,                       bg:'#CC99DD',tx:_TX,label:'Surdo'},
-  {k:'ride',      re:/\bride\b/i,                        bg:'#FF7777',tx:_TX,label:'Ride'},
-  {k:'caixa',     re:/\bcaixa\b/i,                       bg:'#33CCEE',tx:_TX,label:'Caixa'},
-  {k:'bumbo',     re:/\bbumbo\b/i,                       bg:'#FFAAAA',tx:_TX,label:'Bumbo'},
-  {k:'marcacao',  re:/marca[çc][aã]o|marcacao/i,         bg:'#FFAAAA',tx:_TX,label:'Marcação'},
-  {k:'acentuacao',re:/acent/i,                           bg:'#FFAAAA',tx:_TX,label:'Acentuação'},
-  {k:'crescente', re:/crescente/i,                       bg:'#FF7777',tx:_TX,label:'Crescente'},
-  {k:'aro',       re:/\baro\b/i,                         bg:'#AACC55',tx:_TX,label:'Aro'},
-  {k:'virada',    re:/virada/i,                          bg:'#FFAAAA',tx:_TX,label:'Virada'},
-  {k:'pratos',    re:/\bprato/i,                         bg:'#FF7777',tx:_TX,label:'Pratos'},
-  {k:'default',   re:/(?:)/,                             bg:'#D0D0D0',tx:_TX,label:''}
+  {k:'hihat',     re:/hi[-\s]?hat|chimbal/i,             bg:'#33CC33',tx:_TX,label:'HiHat'},
+  {k:'pausa',     re:/\bpausa\b/i,                        bg:'#FFFF99',tx:_TX,label:'Pausa'},
+  {k:'tribal',    re:/tribal/i,                           bg:'#CC99DD',tx:_TX,label:'Tribal'},
+  {k:'surdo',     re:/\bsurdo\b/i,                        bg:'#CC99DD',tx:_TX,label:'Surdo'},
+  {k:'ride',      re:/\bride\b/i,                         bg:'#FF7777',tx:_TX,label:'Ride'},
+  {k:'caixa',     re:/\bcaixa\b/i,                        bg:'#33CCEE',tx:_TX,label:'Caixa'},
+  {k:'bumbo',     re:/\bbumbo\b/i,                        bg:'#FFAAAA',tx:_TX,label:'Bumbo'},
+  {k:'marcacao',  re:/marca[çc][aã]o|marcacao/i,          bg:'#FFAAAA',tx:_TX,label:'Marcação'},
+  {k:'acentuacao',re:/acent/i,                            bg:'#FFAAAA',tx:_TX,label:'Acentuação'},
+  {k:'crescente', re:/crescente/i,                        bg:'#FF7777',tx:_TX,label:'Crescente'},
+  {k:'aro',       re:/\baro\b/i,                          bg:'#AACC55',tx:_TX,label:'Aro'},
+  {k:'virada',    re:/virada/i,                           bg:'#FFAAAA',tx:_TX,label:'Virada'},
+  {k:'pratos',    re:/\bprato/i,                          bg:'#FF7777',tx:_TX,label:'Pratos'},
+  {k:'default',   re:/(?:)/,                              bg:'#D0D0D0',tx:_TX,label:''}
 ];
 function getCol(ann){
-  for(const c of COLS){if(c.re.test(ann)) return c;}
+  for(const c of COLS){if(c.re.test(ann||''))return c;}
   return COLS[COLS.length-1];
 }
 
-// ── CSV PARSE ──────────────────────────────────────────
+// ── CSV PARSE — flat row-by-row, faithful to Excel ─────
 function parseCSV(raw){
   const rows=raw.split(/\r?\n/).map(r=>r.split(';'));
   if(rows.length<12) throw new Error('Arquivo inválido ou muito curto.');
-  // Find song name row (most non-empty, non-bracket cells)
+
+  // Find row with most non-empty, non-bracket cells (song name row)
   let nameRow=10,best=0;
   for(let r=0;r<Math.min(20,rows.length);r++){
     const n=rows[r].filter(c=>c.trim()&&!c.trim().startsWith('[')).length;
     if(n>best){best=n;nameRow=r;}
   }
+
   const cols=[];
   (rows[nameRow]||[]).forEach((cell,i)=>{
     const n=cell.trim();
     if(n&&!n.startsWith('[')) cols.push({name:n,i});
   });
   if(!cols.length) throw new Error('Nenhuma música encontrada. CSV deve usar ; como separador.');
-  const start=nameRow+2;
+
+  const start=nameRow+2; // skip name row + one empty row
+
   return cols.map(({name,i})=>{
-    const blocks=[];
-    let anns=[],lyrics=[];
-    const flush=()=>{
-      if(anns.length||lyrics.length){blocks.push({anns:[...anns],lyrics:[...lyrics]});anns=[];lyrics=[];}
-    };
+    // Build flat item array — one item per CSV row, faithful to Excel order
+    const items=[];
+    let lastBg='#D0D0D0', lastTx=_TX;
+    let prevWasEmpty=true; // suppress consecutive empties
+
     for(let r=start;r<rows.length;r++){
       const cell=(i<(rows[r]||[]).length?rows[r][i]:'').trim();
-      if(!cell){flush();continue;}
-      if(cell.startsWith('[')){if(lyrics.length) flush();anns.push(cell);}
-      else lyrics.push(cell);
+
+      if(!cell){
+        // Only add one empty between content (collapse consecutive)
+        if(!prevWasEmpty) items.push({type:'empty'});
+        prevWasEmpty=true;
+      } else if(cell.startsWith('[')){
+        const c=getCol(cell);
+        lastBg=c.bg; lastTx=c.tx;
+        items.push({type:'ann', text:cell, bg:c.bg, tx:c.tx});
+        prevWasEmpty=false;
+      } else {
+        items.push({type:'lyric', text:cell, accent:lastBg});
+        prevWasEmpty=false;
+      }
     }
-    flush();
-    // Dominant color
+
+    // Remove trailing empty rows
+    while(items.length>0&&items[items.length-1].type==='empty') items.pop();
+
+    // Dominant color (for list)
     const cnt={};
-    blocks.forEach(b=>{const k=getCol(b.anns[0]||'').bg;cnt[k]=(cnt[k]||0)+1;});
-    const dom=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'#374151';
-    return {name,col:i,blocks,dom};
+    items.filter(x=>x.type==='ann').forEach(x=>{cnt[x.bg]=(cnt[x.bg]||0)+1;});
+    const dom=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'#D0D0D0';
+    const sections=items.filter(x=>x.type==='ann').length;
+
+    return {name,col:i,items,dom,sections};
   });
 }
 
@@ -330,10 +360,14 @@ function saveAll(){
 function loadStore(){
   try{
     const f=localStorage.getItem('thurgh_favs');if(f)favs=new Set(JSON.parse(f));
-    const fz=localStorage.getItem('thurgh_fs');if(fz)fs=parseInt(fz)||18;
+    const fz=localStorage.getItem('thurgh_fs');if(fz)fs=parseInt(fz)||16;
     const wk=localStorage.getItem('thurgh_week');if(wk)weekMode=wk==='1';
     const s=localStorage.getItem('thurgh_songs');
-    if(s){songs=JSON.parse(s);return true;}
+    if(s){
+      const p=JSON.parse(s);
+      // Verify new format (has items array, not blocks)
+      if(p.length>0&&Array.isArray(p[0].items)){songs=p;return true;}
+    }
   }catch(e){}
   return false;
 }
@@ -355,10 +389,10 @@ function decodeBuffer(buf){
   catch(e){text=new TextDecoder('iso-8859-1').decode(new Uint8Array(buf));}
   return text;
 }
-function processText(text){
-  songs=parseCSV(text);
-  if(!songs.length) throw new Error('Nenhuma música encontrada.');
-  saveAll(); goList();
+function processCSV(text){
+  const parsed=parseCSV(text);
+  if(!parsed.length) throw new Error('Nenhuma música encontrada.');
+  songs=parsed; saveAll(); goList();
 }
 function readFile(file){
   const err=document.getElementById('up-err');
@@ -368,23 +402,20 @@ function readFile(file){
   }
   const reader=new FileReader();
   reader.onload=e=>{
-    try{processText(decodeBuffer(e.target.result));}
+    try{processCSV(decodeBuffer(e.target.result));}
     catch(ex){err.textContent=ex.message;err.style.display='block';}
   };
   reader.readAsArrayBuffer(file);
 }
-
-// Auto-load from same directory
 async function tryAutoLoad(){
   const names=['./musicas.csv','./Thurgh_IBAV_.csv','./thurgh.csv','./sheet.csv'];
   for(const url of names){
     try{
       const res=await fetch(url,{cache:'no-store'});
       if(res.ok){
-        const buf=await res.arrayBuffer();
-        const text=decodeBuffer(buf);
-        songs=parseCSV(text);
-        if(songs.length){saveAll();goList();return;}
+        const text=decodeBuffer(await res.arrayBuffer());
+        const parsed=parseCSV(text);
+        if(parsed.length){songs=parsed;saveAll();goList();return;}
       }
     }catch(e){}
   }
@@ -396,7 +427,7 @@ function toggleFav(name){
   saveAll();renderList();
   if(cur?.name===name) syncFavBtn();
 }
-function toggleFavSong(){if(cur){toggleFav(cur.name);syncFavBtn();}}
+function toggleFavSong(){if(cur){toggleFav(cur.name);}}
 function syncFavBtn(){
   const on=favs.has(cur?.name);
   const btn=document.getElementById('hd-fav');
@@ -413,19 +444,14 @@ function toggleWeek(){
 function renderList(){
   document.getElementById('week-btn').classList.toggle('active',weekMode);
   const q=(document.getElementById('search-in').value||'').toLowerCase().trim();
-
-  // Sort: favorites first, then alphabetical
   const sorted=[...songs].sort((a,b)=>{
-    const af=favs.has(a.name)?0:1, bf=favs.has(b.name)?0:1;
-    if(af!==bf) return af-bf;
-    return a.name.localeCompare(b.name,'pt');
+    const af=favs.has(a.name)?0:1,bf=favs.has(b.name)?0:1;
+    return af!==bf?af-bf:a.name.localeCompare(b.name,'pt');
   });
-
   const list=sorted.filter(s=>{
-    if(weekMode&&!favs.has(s.name)) return false;
+    if(weekMode&&!favs.has(s.name))return false;
     return !q||s.name.toLowerCase().includes(q);
   });
-
   const el=document.getElementById('song-list');
   if(!list.length){
     el.innerHTML=`<div class="empty-msg">${weekMode
@@ -433,11 +459,11 @@ function renderList(){
       :'Nenhuma música encontrada.'}</div>`;
   } else {
     el.innerHTML=list.map(s=>{
-      const si=songs.indexOf(s), isFav=favs.has(s.name);
+      const si=songs.indexOf(s),isFav=favs.has(s.name);
       return `<div class="song-item" data-si="${si}">
         <div class="song-info">
           <div class="song-name${isFav?' is-fav':''}">${esc(s.name)}</div>
-          <div class="song-meta">${s.blocks.length} blocos</div>
+          <div class="song-meta">${s.sections} seções</div>
         </div>
         <button class="fav-btn${isFav?' active':''}" data-si="${si}">${isFav?'★':'☆'}</button>
       </div>`;
@@ -455,69 +481,59 @@ function renderList(){
       });
     });
   }
-  const total=songs.length,nFav=favs.size;
+  const nFav=favs.size;
   document.getElementById('list-foot').textContent=
-    `${total} músicas · ${nFav} favorita${nFav!==1?'s':''}`;
+    `${songs.length} músicas · ${nFav} favorita${nFav!==1?'s':''}`;
 }
 
-// ── SONG RENDER ────────────────────────────────────────
+// ── TEXT UTILS ─────────────────────────────────────────
 function esc(s){
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
-// Split "[TYPE] optional (note)" annotation
-function splitAnn(ann){
-  // Find the last ] and check if there's extra text after it
-  const lb=ann.lastIndexOf(']');
-  if(lb>=0&&lb<ann.length-1){
-    const after=ann.substring(lb+1).trim();
-    if(after) return {type:ann.substring(0,lb+1), note:after};
-  }
-  return {type:ann,note:''};
+// Wrap text inside [...] and (...) in <strong>
+function boldify(raw){
+  return esc(raw)
+    .replace(/\[([^\]]*)\]/g,'<strong>[$1]</strong>')
+    .replace(/\(([^)]*)\)/g,'<strong>($1)</strong>');
 }
 
+// ── SONG RENDER ────────────────────────────────────────
 function renderSong(){
   if(!cur) return;
-  document.documentElement.style.setProperty('--fs',fs+'px');
+  applyFs();
   document.getElementById('hd-title').textContent=cur.name;
   syncFavBtn();
 
-  // Legend: unique drum types in this song
+  // Legend: unique drum type labels — text uses the annotation color (legible on dark)
   const seen=new Map();
-  cur.blocks.forEach(b=>{
-    const c=getCol(b.anns[0]||'');
+  cur.items.forEach(row=>{
+    if(row.type!=='ann') return;
+    const c=getCol(row.text);
     if(c.label&&!seen.has(c.label)) seen.set(c.label,c);
   });
   document.getElementById('legend').innerHTML=
     [...seen.values()].map(c=>
-      `<span class="leg-pill" style="background:${c.bg}20">
+      `<span class="leg-pill" style="background:${c.bg}22">
         <span class="leg-dot" style="background:${c.bg}"></span>
-        <span style="color:${c.bg}">${c.label}</span>
+        <span style="color:${c.bg};font-weight:700">${c.label}</span>
       </span>`
     ).join('');
 
-  // Build flat-row Excel-like layout
-  let html='';
-  cur.blocks.forEach((b,bi)=>{
-    const c=getCol(b.anns[0]||'');
-    html+='<div class="section">';
-    // Each annotation gets its own colored row
-    b.anns.forEach((ann,ai)=>{
-      const ac=getCol(ann);
-      const {type,note}=splitAnn(ann);
-      html+=`<div class="ann-row" style="background:${ac.bg};color:${ac.tx}">
-        <span class="ann-type">${esc(type)}</span>
-        ${note?`<span class="ann-note">${esc(note)}</span>`:''}
-      </div>`;
-    });
-    // Lyric rows
-    b.lyrics.forEach(l=>{
-      html+=`<div class="lyric-row" style="--sec-color:${c.bg}">${esc(l)}</div>`;
-    });
-    html+='</div>';
-    if(bi<cur.blocks.length-1) html+='<div class="sec-gap"></div>';
+  // Build sheet: styled title + one row per CSV row
+  // Title uses dominant song color as text + subtle underline
+  let html=`<div class="sheet-title" style="color:${cur.dom};border-bottom:2px solid ${cur.dom}44">${esc(cur.name)}</div>`;
+
+  cur.items.forEach(item=>{
+    if(item.type==='empty'){
+      html+=`<div class="sheet-empty"></div>`;
+    } else if(item.type==='ann'){
+      html+=`<div class="sheet-ann" style="--row-bg:${item.bg};--row-tx:${item.tx};background:${item.bg};color:${item.tx}">${boldify(item.text)}</div>`;
+    } else {
+      // Lyric: tinted dark version of section color (~18% opacity) + left accent border
+      html+=`<div class="sheet-lyric" style="background:${item.accent}2E;--row-accent:${item.accent}">${boldify(item.text)}</div>`;
+    }
   });
 
   const body=document.getElementById('song-body');
@@ -526,10 +542,14 @@ function renderSong(){
   resetProg();
 }
 
-function adjFs(d){
-  fs=Math.max(12,Math.min(30,fs+d));
+function applyFs(){
   document.documentElement.style.setProperty('--fs',fs+'px');
-  saveAll();
+  const lbl=document.getElementById('fs-label');
+  if(lbl) lbl.textContent=fs;
+}
+function adjFs(d){
+  fs=Math.max(10,Math.min(32,fs+d));
+  applyFs(); saveAll();
 }
 
 // ── PLAYBACK ───────────────────────────────────────────
@@ -548,11 +568,11 @@ function resetProg(){
   document.getElementById('pb-el').textContent='0:00';
   document.getElementById('pb-rem').textContent='';
 }
-function updateProg(pct,durSec){
+function updateProg(pct,dur){
   pct=Math.max(0,Math.min(1,pct));
   document.getElementById('prog-fill').style.width=(pct*100).toFixed(1)+'%';
-  document.getElementById('pb-el').textContent=fmt(pct*durSec);
-  document.getElementById('pb-rem').textContent='-'+fmt((1-pct)*durSec);
+  document.getElementById('pb-el').textContent=fmt(pct*dur);
+  document.getElementById('pb-rem').textContent='-'+fmt((1-pct)*dur);
 }
 
 function togglePlay(){playing?pausePlay():startPlay();}
@@ -560,75 +580,51 @@ function togglePlay(){playing?pausePlay():startPlay();}
 function startPlay(){
   const body=document.getElementById('song-body');
   if(!body) return;
-
-  // Recalculate scrollable height (content may have changed)
   const total=body.scrollHeight-body.clientHeight;
-  if(total<10){
-    // Content doesn't scroll — nothing to do
-    return;
-  }
-
+  if(total<10) return;
   const dur=parseDur(document.getElementById('dur-in').value);
-
-  // If at bottom, restart from top
+  // Restart from top if at end
   if(body.scrollTop>=total-4) body.scrollTop=0;
-
   const curY=body.scrollTop;
-  const frac=total>0?curY/total:0;
+  const frac=curY/total;
   const timeLeft=Math.max(0.5,dur*(1-frac));
-  const dist=total-curY;
-
-  // Store absolute playback state
   ps={
     startTime:performance.now(),
     startScroll:curY,
     totalScroll:total,
     durSec:dur,
-    speed:dist/timeLeft   // px/s
+    speed:(total-curY)/timeLeft
   };
-
   playing=true;
   document.getElementById('play-btn').textContent='⏸';
   if(rafId) cancelAnimationFrame(rafId);
   rafId=requestAnimationFrame(rafLoop);
 }
-
 function pausePlay(){
   playing=false;
   if(rafId){cancelAnimationFrame(rafId);rafId=null;}
   document.getElementById('play-btn').textContent='▶';
 }
-
 function stopPlay(){
   pausePlay();
   const body=document.getElementById('song-body');
   if(body) body.scrollTop=0;
-  ps=null;
-  resetProg();
+  ps=null; resetProg();
 }
-
 function rafLoop(now){
   if(!playing||!ps) return;
   const body=document.getElementById('song-body');
   if(!body){playing=false;return;}
-
   const elapsed=(now-ps.startTime)/1000;
   const newY=ps.startScroll+ps.speed*elapsed;
   body.scrollTop=newY;
-
-  const pct=ps.totalScroll>0?newY/ps.totalScroll:0;
+  const pct=newY/ps.totalScroll;
   updateProg(pct,ps.durSec);
-
-  if(newY>=ps.totalScroll-1){
-    pausePlay();
-    updateProg(1,ps.durSec);
-    return;
-  }
+  if(newY>=ps.totalScroll-1){pausePlay();updateProg(1,ps.durSec);return;}
   rafId=requestAnimationFrame(rafLoop);
 }
-
 function seekClick(e){
-  const bar=document.getElementById('prog-fill').parentElement;
+  const bar=e.currentTarget;
   const rect=bar.getBoundingClientRect();
   const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
   const body=document.getElementById('song-body');
@@ -637,11 +633,7 @@ function seekClick(e){
   body.scrollTop=pct*total;
   const dur=parseDur(document.getElementById('dur-in').value);
   updateProg(pct,dur);
-  if(playing){
-    // Recalculate from new position
-    pausePlay();
-    startPlay();
-  }
+  if(playing){pausePlay();startPlay();}
 }
 
 // ── INIT ───────────────────────────────────────────────
@@ -662,22 +654,16 @@ function seekClick(e){
     if(e.target.files[0]) readFile(e.target.files[0]);
   });
 
-  // Load saved state first (fast)
+  // Load saved state
   loadStore();
+  applyFs();
 
-  // Try auto-loading from disk (async, won't block)
-  // Works when served via HTTP; silently ignored on file://
-  const autoLoaded=new Promise(async resolve=>{
-    try{ await tryAutoLoad(); }catch(e){}
-    resolve();
-  });
-
-  // Show list if we have songs from localStorage, otherwise upload screen
   if(songs.length){
     goList();
   } else {
-    // Wait briefly for auto-load attempt
-    await Promise.race([autoLoaded, new Promise(r=>setTimeout(r,800))]);
+    // Try auto-loading from disk (works on HTTP server)
+    const autoP=tryAutoLoad();
+    await Promise.race([autoP,new Promise(r=>setTimeout(r,800))]);
     if(!songs.length) show('screen-upload');
   }
 })();
