@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Thurgh · Sheet de Bateria</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -11,8 +11,9 @@
   --text:#E8E2D0;--muted:#6B6B84;--accent:#7C5CFC;
   --fs:16px; /* font size controlled by A+/A- */
 }
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
+#screen-upload,#screen-list,#screen-song{height:100vh;height:100dvh}
 .hidden{display:none!important}
 button{cursor:pointer;border:none;background:none;color:inherit;font-family:inherit}
 input{font-family:inherit}
@@ -112,6 +113,7 @@ input{font-family:inherit}
   flex:1;overflow-y:auto;overflow-x:hidden;
   background:#0B0B12;
   font-size:var(--fs);
+  -webkit-overflow-scrolling:touch;
 }
 #song-body::-webkit-scrollbar{width:5px}
 #song-body::-webkit-scrollbar-track{background:#0B0B12}
@@ -157,7 +159,8 @@ input{font-family:inherit}
 
 /* ── PLAYBAR ──────────────────────────────────────── */
 .playbar{background:var(--surface);border-top:1px solid var(--border);
-  padding:9px 14px;flex-shrink:0}
+  padding:9px 14px;padding-bottom:max(9px,env(safe-area-inset-bottom));
+  flex-shrink:0}
 .pb-row{display:flex;align-items:center;gap:9px}
 .pb-stop{width:38px;height:38px;border-radius:7px;font-size:14px;
   background:var(--card);border:1px solid var(--border);
@@ -182,6 +185,45 @@ input{font-family:inherit}
   transition:width .08s linear;border-radius:4px}
 .prog-times{display:flex;justify-content:space-between;
   font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ── MOBILE (portrait / small screens) ──────────────── */
+@media (max-width:640px){
+  /* Larger default font so lyrics are readable */
+  :root{--fs:20px}
+
+  /* List: bigger tap targets */
+  .song-item{padding:15px 16px;min-height:54px}
+  .song-name{font-size:17px}
+  .fav-btn{font-size:24px;padding:4px 10px}
+  .pill-btn{padding:8px 14px;font-size:13px}
+  .search-in{font-size:16px;padding:10px 12px 10px 34px}
+
+  /* Song header: compact but usable */
+  .song-hd{padding:8px 10px;gap:6px}
+  .back-btn{font-size:12px;padding:5px 10px}
+  .song-hd-title{font-size:13px}
+  .hd-fav-btn{font-size:22px}
+  .font-btn{width:34px;height:34px;font-size:15px}
+  .font-size-label{font-size:12px;min-width:24px}
+
+  /* Sheet rows: comfortable reading padding */
+  .sheet-ann{padding:7px 12px}
+  .sheet-lyric{padding:5px 12px 5px 14px}
+
+  /* Playbar: safe area + big touch targets */
+  .playbar{
+    padding:10px 12px;
+    padding-bottom:max(14px,env(safe-area-inset-bottom))
+  }
+  .pb-stop{width:48px;height:48px;font-size:16px;border-radius:10px}
+  .pb-play{width:60px;height:48px;font-size:22px;border-radius:10px}
+  .dur-in{font-size:17px;padding:7px 8px;width:70px}
+  .dur-lbl{font-size:10px}
+  .prog-bar{height:14px;border-radius:7px}
+  .prog-fill{border-radius:7px}
+  .prog-times{font-size:11px}
+  .pb-row{gap:10px}
+}
 </style>
 </head>
 <body>
@@ -263,7 +305,8 @@ input{font-family:inherit}
 <script>
 // ── STATE ──────────────────────────────────────────────
 let songs=[], favs=new Set(), cur=null;
-let fs=16, weekMode=false;
+// Larger default on mobile so lyrics are readable without manual zoom
+let fs=window.innerWidth<=640?20:16, weekMode=false;
 let playing=false, rafId=null;
 let ps=null; // playback state: {startTime, startScroll, totalScroll, durSec, speed}
 
