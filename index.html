@@ -309,6 +309,26 @@ function parseCSV(raw){
   });
   if(!cols.length) throw new Error('Nenhuma música encontrada. CSV deve usar ; como separador.');
 
+  // Baseline row length (most common). Rows longer than this have an extra ';'
+  // somewhere before a song column, shifting that song's content to the right.
+  const lenCount={};
+  rows.forEach(r=>{lenCount[r.length]=(lenCount[r.length]||0)+1;});
+  const baseLen=+Object.entries(lenCount).sort((a,b)=>b[1]-a[1])[0][0];
+
+  // Read a cell, compensating for right-shifts in longer rows.
+  function readCell(row,colIdx){
+    const extra=Math.max(0,row.length-baseLen);
+    let cell=(colIdx<row.length?row[colIdx]:'').trim();
+    // If empty and row has extra columns, content may have shifted right
+    if(!cell&&extra>0){
+      for(let s=1;s<=extra;s++){
+        const alt=((colIdx+s)<row.length?row[colIdx+s]:'').trim();
+        if(alt){cell=alt;break;}
+      }
+    }
+    return cell;
+  }
+
   const start=nameRow+2; // skip name row + one empty row
 
   return cols.map(({name,i})=>{
@@ -318,7 +338,7 @@ function parseCSV(raw){
     let prevWasEmpty=true; // suppress consecutive empties
 
     for(let r=start;r<rows.length;r++){
-      const cell=(i<(rows[r]||[]).length?rows[r][i]:'').trim();
+      const cell=readCell(rows[r]||[],i);
 
       if(!cell){
         // Only add one empty between content (collapse consecutive)
