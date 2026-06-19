@@ -188,41 +188,77 @@ input{font-family:inherit}
 
 /* ── MOBILE (portrait / small screens) ──────────────── */
 @media (max-width:768px){
-  /* Larger default font so lyrics are readable */
-  :root{--fs:20px}
 
-  /* List: bigger tap targets */
-  .song-item{padding:15px 16px;min-height:54px}
-  .song-name{font-size:17px}
-  .fav-btn{font-size:24px;padding:4px 10px}
-  .pill-btn{padding:8px 14px;font-size:13px}
-  .search-in{font-size:16px;padding:10px 12px 10px 34px}
+  /* ── Base font — everything tied to this ── */
+  :root{--fs:22px}
 
-  /* Song header: compact but usable */
-  .song-hd{padding:8px 10px;gap:6px}
-  .back-btn{font-size:12px;padding:5px 10px}
-  .song-hd-title{font-size:13px}
-  .hd-fav-btn{font-size:22px}
-  .font-btn{width:34px;height:34px;font-size:15px}
-  .font-size-label{font-size:12px;min-width:24px}
+  /* ── UPLOAD SCREEN ── */
+  .up-logo{font-size:40px;letter-spacing:4px}
+  .up-sub{font-size:13px}
+  .drop-text{font-size:15px}
+  .drop-btn{padding:13px 32px;font-size:15px}
+  .up-tip{font-size:13px;margin-top:16px}
 
-  /* Sheet rows: comfortable reading padding */
-  .sheet-ann{padding:7px 12px}
-  .sheet-lyric{padding:5px 12px 5px 14px}
+  /* ── LIST SCREEN ── */
+  .list-title{font-size:20px;font-weight:800}
+  .list-head{padding:14px 14px 12px}
+  .list-head-row{margin-bottom:12px}
+  .pill-btn{padding:10px 18px;font-size:14px;border-radius:24px}
+  .search-ico{font-size:16px}
+  .search-in{font-size:17px;padding:12px 14px 12px 38px;border-radius:10px}
+  .song-item{padding:16px 14px;min-height:64px}
+  .song-name{font-size:18px;line-height:1.4}
+  .song-meta{font-size:13px;margin-top:4px}
+  .fav-btn{font-size:28px;padding:4px 10px}
+  .list-foot{font-size:13px;padding:12px 16px}
+  .empty-msg{font-size:16px}
 
-  /* Playbar: safe area + big touch targets */
+  /* ── SONG HEADER ── */
+  .song-hd{padding:10px 12px;gap:8px;min-height:58px}
+  .back-btn{font-size:14px;padding:9px 16px;border-radius:8px}
+  .song-hd-title{font-size:15px}
+  .hd-fav-btn{font-size:26px;padding:2px 8px}
+  .font-grp{gap:5px}
+  .font-btn{width:40px;height:40px;font-size:17px;border-radius:8px}
+  .font-size-label{font-size:14px;min-width:30px}
+
+  /* ── LEGEND ── */
+  .legend-strip{padding:9px 14px;gap:8px;min-height:40px}
+  .leg-pill{padding:5px 11px;border-radius:14px}
+  .leg-pill span:last-child{font-size:13px!important}
+  .leg-dot{width:10px;height:10px}
+
+  /* ── SHEET ROWS ── */
+  .sheet-title{padding:16px 14px;font-size:calc(var(--fs) + 2px)}
+  .sheet-ann{padding:9px 14px;font-size:var(--fs);line-height:1.55}
+  .sheet-lyric{padding:7px 14px 7px 16px;font-size:var(--fs);line-height:1.75}
+  .sheet-empty{height:calc(var(--fs) * 1.0)}
+
+  /* ── PLAYBAR ── */
   .playbar{
-    padding:10px 12px;
-    padding-bottom:max(14px,env(safe-area-inset-bottom))
+    padding:12px 14px;
+    padding-bottom:max(16px,env(safe-area-inset-bottom))
   }
-  .pb-stop{width:48px;height:48px;font-size:16px;border-radius:10px}
-  .pb-play{width:60px;height:48px;font-size:22px;border-radius:10px}
-  .dur-in{font-size:17px;padding:7px 8px;width:70px}
-  .dur-lbl{font-size:10px}
-  .prog-bar{height:14px;border-radius:7px}
-  .prog-fill{border-radius:7px}
-  .prog-times{font-size:11px}
-  .pb-row{gap:10px}
+  .pb-row{gap:12px}
+  .pb-stop{
+    width:54px;height:54px;
+    font-size:20px;border-radius:12px
+  }
+  .pb-play{
+    width:68px;height:54px;
+    font-size:26px;border-radius:12px
+  }
+  .dur-grp{gap:4px}
+  .dur-in{
+    font-size:19px;font-weight:800;
+    padding:8px 8px;width:78px;
+    border-radius:8px
+  }
+  .dur-lbl{font-size:11px;letter-spacing:1px}
+  .prog-grp{gap:7px}
+  .prog-bar{height:18px;border-radius:9px;cursor:pointer}
+  .prog-fill{border-radius:9px}
+  .prog-times{font-size:13px}
 }
 </style>
 </head>
@@ -307,7 +343,7 @@ input{font-family:inherit}
 let songs=[], favs=new Set(), cur=null;
 // Larger default on mobile so lyrics are readable without manual zoom
 const MOBILE=window.innerWidth<=768;
-let fs=MOBILE?20:16, weekMode=false;
+let fs=MOBILE?22:16, weekMode=false;
 let playing=false, rafId=null;
 let ps=null; // playback state: {startTime, startScroll, totalScroll, durSec, speed}
 
@@ -424,7 +460,7 @@ function saveAll(){
 function loadStore(){
   try{
     const f=localStorage.getItem('thurgh_favs');if(f)favs=new Set(JSON.parse(f));
-    const fz=localStorage.getItem('thurgh_fs');if(fz){fs=parseInt(fz)||fs;if(MOBILE&&fs<18)fs=20;}
+    const fz=localStorage.getItem('thurgh_fs');if(fz){fs=parseInt(fz)||fs;if(MOBILE&&fs<20)fs=22;}
     const wk=localStorage.getItem('thurgh_week');if(wk)weekMode=wk==='1';
     const s=localStorage.getItem('thurgh_songs');
     if(s){
