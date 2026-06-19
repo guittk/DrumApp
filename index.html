@@ -13,7 +13,7 @@
 }
 html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
-#screen-upload,#screen-list,#screen-song{height:100vh;height:100dvh}
+#screen-upload,#screen-list,#screen-song{height:100vh;height:calc(var(--vh,1vh)*100)}
 .hidden{display:none!important}
 button{cursor:pointer;border:none;background:none;color:inherit;font-family:inherit}
 input{font-family:inherit}
@@ -41,7 +41,7 @@ input{font-family:inherit}
   background:rgba(239,68,68,.12);border-radius:8px;display:none}
 
 /* ── LIST ────────────────────────────────────────── */
-#screen-list{height:100vh;display:flex;flex-direction:column}
+#screen-list{height:100vh;height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column}
 .list-head{padding:12px 16px 10px;background:var(--surface);
   border-bottom:1px solid var(--border);flex-shrink:0}
 .list-head-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
@@ -77,7 +77,7 @@ input{font-family:inherit}
   font-size:14px;line-height:2}
 
 /* ── SONG SCREEN ─────────────────────────────────── */
-#screen-song{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#screen-song{height:100vh;height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column;overflow:hidden}
 .song-hd{padding:10px 14px;background:var(--surface);
   border-bottom:1px solid var(--border);flex-shrink:0;
   display:flex;align-items:center;gap:8px;min-height:48px}
@@ -110,7 +110,7 @@ input{font-family:inherit}
    SONG BODY — Excel-faithful structure, dark design
 ─────────────────────────────────────────────────────── */
 #song-body{
-  flex:1;overflow-y:auto;overflow-x:hidden;
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
   background:#0B0B12;
   font-size:var(--fs);
   -webkit-overflow-scrolling:touch;
@@ -187,7 +187,7 @@ input{font-family:inherit}
   font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
 
 /* ── MOBILE (portrait / small screens) ──────────────── */
-@media (max-width:640px){
+@media (max-width:768px){
   /* Larger default font so lyrics are readable */
   :root{--fs:20px}
 
@@ -306,7 +306,8 @@ input{font-family:inherit}
 // ── STATE ──────────────────────────────────────────────
 let songs=[], favs=new Set(), cur=null;
 // Larger default on mobile so lyrics are readable without manual zoom
-let fs=window.innerWidth<=640?20:16, weekMode=false;
+const MOBILE=window.innerWidth<=768;
+let fs=MOBILE?20:16, weekMode=false;
 let playing=false, rafId=null;
 let ps=null; // playback state: {startTime, startScroll, totalScroll, durSec, speed}
 
@@ -423,7 +424,7 @@ function saveAll(){
 function loadStore(){
   try{
     const f=localStorage.getItem('thurgh_favs');if(f)favs=new Set(JSON.parse(f));
-    const fz=localStorage.getItem('thurgh_fs');if(fz)fs=parseInt(fz)||16;
+    const fz=localStorage.getItem('thurgh_fs');if(fz){fs=parseInt(fz)||fs;if(MOBILE&&fs<18)fs=20;}
     const wk=localStorage.getItem('thurgh_week');if(wk)weekMode=wk==='1';
     const s=localStorage.getItem('thurgh_songs');
     if(s){
@@ -730,6 +731,16 @@ function seekClick(e){
     if(!songs.length) show('screen-upload');
   }
 })();
+
+// ── VIEWPORT HEIGHT FIX ───────────────────────────────
+// window.innerHeight excludes mobile browser chrome (address bar, toolbars).
+// This is more reliable than 100vh / 100dvh on iOS Safari.
+function setVH(){
+  document.documentElement.style.setProperty('--vh',window.innerHeight*0.01+'px');
+}
+setVH();
+window.addEventListener('resize',setVH);
+window.addEventListener('orientationchange',()=>setTimeout(setVH,120));
 </script>
 </body>
 </html>
