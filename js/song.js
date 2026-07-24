@@ -52,6 +52,8 @@ function renderSong(){
     else if(item.type==='lyric'){ if(!sec){sec={ann:null,lyrics:[]};sections.push(sec);} sec.lyrics.push(item); }
   });
 
+  // Sections with no lyrics inside join the block above (regardless of color)
+  const blocks=[];
   sections.forEach(s=>{
     let headHtml='',color='#7C5CFC';
     if(s.ann){
@@ -66,7 +68,16 @@ function renderSong(){
       </div>`;
     }
     const lyricsHtml=s.lyrics.map(l=>`<div class="sheet-lyric-line">${boldify(l.text)}</div>`).join('');
-    html+=`<div class="sheet-section" style="--sec-color:${color}">${headHtml}<div class="sheet-section-body">${lyricsHtml}</div></div>`;
+    const bodyHtml=`<div class="sheet-section-body">${lyricsHtml}</div>`;
+
+    if(s.lyrics.length===0 && blocks.length){
+      blocks[blocks.length-1].html+=headHtml+bodyHtml;
+    }else{
+      blocks.push({color,html:headHtml+bodyHtml});
+    }
+  });
+  blocks.forEach(b=>{
+    html+=`<div class="sheet-section" style="--sec-color:${b.color}">${b.html}</div>`;
   });
 
   const body=document.getElementById('song-body');
