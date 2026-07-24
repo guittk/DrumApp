@@ -8,9 +8,10 @@ function decodeBuffer(buf){
 function processCSV(text){
   const parsed=parseCSV(text);
   if(!parsed.length) throw new Error('Nenhuma música encontrada.');
-  // Keep manually created songs
+  // Keep manually created/edited songs; drop CSV versions overridden by an edited copy
   const created=songs.filter(s=>s.created);
-  songs=[...parsed,...created]; saveAll(); goList();
+  const createdNames=new Set(created.map(s=>s.name));
+  songs=[...parsed.filter(s=>!createdNames.has(s.name)),...created]; saveAll(); goList();
 }
 function readFile(file){
   const err=document.getElementById('up-err');
@@ -29,7 +30,7 @@ async function tryAutoLoad(){
   for(const url of['./musicas.csv','./Thurgh_IBAV_.csv','./thurgh.csv','./sheet.csv']){
     try{
       const res=await fetch(url,{cache:'no-store'});
-      if(res.ok){const t=decodeBuffer(await res.arrayBuffer());const p=parseCSV(t);if(p.length){const c=songs.filter(s=>s.created);songs=[...p,...c];saveAll();goList();return;}}
+      if(res.ok){const t=decodeBuffer(await res.arrayBuffer());const p=parseCSV(t);if(p.length){const c=songs.filter(s=>s.created);const cn=new Set(c.map(s=>s.name));songs=[...p.filter(s=>!cn.has(s.name)),...c];saveAll();goList();return;}}
     }catch(e){}
   }
 }

@@ -6,13 +6,13 @@ function renderSong(){
   applyFs();
   document.getElementById('hd-title').textContent=cur.name;
   syncFavBtn();
+  document.getElementById('dur-in').value=cur.duration||'3:30';
 
   // Legend
   const seen=new Map();
   cur.items.forEach(row=>{
     if(row.type!=='ann') return;
-    const c=getCol(row.text);
-    if(c.label&&!seen.has(c.label)) seen.set(c.label,c);
+    getAllCols(row.text).forEach(c=>{if(c.label&&!seen.has(c.label)) seen.set(c.label,c);});
   });
   document.getElementById('legend').innerHTML=[...seen.values()].map(c=>
     `<span class="leg-pill" style="background:${c.bg}18;border-color:${c.bg}55">
@@ -55,12 +55,12 @@ function renderSong(){
   sections.forEach(s=>{
     let headHtml='',color='#7C5CFC';
     if(s.ann){
-      color=s.ann.bg;
-      const col=getCol(s.ann.text);
-      const icon=getIcon(col.label);
+      const cols=getAllCols(s.ann.text);
+      color=cols.length>1?blendColors(cols.map(c=>c.bg)):s.ann.bg;
+      const icons=cols.map(c=>getIcon(c.label)).join(' ');
       const {type,rest}=parseAnn(s.ann.text);
       headHtml=`<div class="sheet-section-hd" style="background:${color}22;border-color:${color}66">
-        <span class="sec-icon">${icon}</span>
+        <span class="sec-icon">${icons}</span>
         <span class="sec-type" style="color:${color}">${boldify(type)}</span>
         ${rest?`<span class="sec-rhythm">${boldify(rest)}</span>`:''}
       </div>`;

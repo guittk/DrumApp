@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════════════════
 //  CSV PARSER
 // ════════════════════════════════════════════════════════
+let csvRows=null, csvNameRow=null, csvBaseLen=null;
 function parseCSV(raw){
   const rows=raw.split(/\r?\n/).map(r=>r.split(';'));
   if(rows.length<12) throw new Error('Arquivo inválido ou muito curto.');
@@ -18,6 +19,7 @@ function parseCSV(raw){
   const lenCount={};
   rows.forEach(r=>{lenCount[r.length]=(lenCount[r.length]||0)+1;});
   const baseLen=+Object.entries(lenCount).sort((a,b)=>b[1]-a[1])[0][0];
+  csvRows=rows;csvNameRow=nameRow;csvBaseLen=baseLen;
   function readCell(row,idx){
     const extra=Math.max(0,row.length-baseLen);
     let cell=(idx<row.length?row[idx]:'').trim();
@@ -47,4 +49,46 @@ function parseCSV(raw){
     const sections=items.filter(x=>x.type==='ann').length;
     return {name,col:i,items,dom,sections,bpm:null,created:false};
   });
+}
+
+// ════════════════════════════════════════════════════════
+//  CSV SERIALIZER (round-trip write-back)
+// ════════════════════════════════════════════════════════
+function serializeCSV(songList){
+  if(!csvRows){
+    csvRows=[];
+    for(let i=0;i<10;i++)csvRows.push([]);
+    csvNameRow=10;
+    csvRows.push([]); // name row
+    csvRows.push([]); // blank separator row
+  }
+  const rows=csvRows.map(r=>[...r]);
+  const nameRow=csvNameRow;
+  const start=nameRow+2;
+  while(rows.length<=start)rows.push([]);
+  const rowWidth=()=>rows[nameRow].length;
+  const ensureRow=r=>{while(rows.length<=r)rows.push([]);};
+  const padRow=(r,w)=>{while(rows[r].length<w)rows[r].push('');};
+  const sanitize=s=>String(s==null?'':s).replace(/;/g,',').replace(/\r?\n/g,' ');
+
+  songList.forEach(song=>{
+    let col=song.col;
+    if(col===undefined||col===null){
+      col=rowWidth();
+      padRow(nameRow,col+1);
+      song.col=col;
+    }
+    padRow(nameRow,col+1);
+    rows[nameRow][col]=song.name;
+    const items=song.items||[];
+    for(let i=0;i<items.length;i++){
+      const r=start+i;ensureRow(r);padRow(r,col+1);
+      const item=items[i];
+      rows[r][col]=item.type==='empty'?'':sanitize(item.text);
+    }
+    for(let r=start+items.length;r<rows.length;r++){
+      if(rows[r].length>col) rows[r][col]='';
+    }
+  });
+  return rows.map(r=>r.join(';')).join('\r\n');
 }

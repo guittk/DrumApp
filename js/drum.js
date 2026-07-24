@@ -136,9 +136,36 @@ function highlightStep(step){
   });
 }
 
-// ── Generate notation from pattern ─────────────────────
+// ── Generate notation from pattern (Tu/Ta/Tra/Bu/Pam) ──
+// Linhas de DRUM_INSTS: 0 bumbo,1 caixa,2 tom,3 hihat_c,4 hihat_o,5 ride,6 surdo
+function stepSyllables(hit){
+  const bumbo=hit[0],caixa=hit[1],tom=hit[2],hhC=hit[3],hhO=hit[4],ride=hit[5],surdo=hit[6];
+  if(caixa&&bumbo){
+    let s='Tra';
+    if(tom)s+='Tu';
+    if(hhC||hhO)s+='Ta';
+    if(ride)s+='Pam';
+    if(surdo)s+='Bu';
+    return s;
+  }
+  if(bumbo&&surdo){
+    let s='TuBu';
+    if(caixa)s+='Ta';
+    if(tom)s+='Tu';
+    if(hhC||hhO)s+='Ta';
+    if(ride)s+='Pam';
+    return s;
+  }
+  let s='';
+  if(bumbo)s+='Tu';
+  if(surdo)s+='Tu';
+  if(tom)s+='Tu';
+  if(caixa)s+='Ta';
+  if(hhC||hhO)s+='Ta';
+  if(ride)s+='Pam';
+  return s;
+}
 function patternToNotation(){
-  const abbr=['B','C','T','H','O','R','S'];
   const steps=drumTotalSteps;
   const beats=steps/4;
   const parts=[];
@@ -146,9 +173,9 @@ function patternToNotation(){
     let beatStr='';
     for(let sub=0;sub<4;sub++){
       const step=beat*4+sub;
-      let chars='';
-      DRUM_INSTS.forEach((_,row)=>{if(drumPattern[row][step])chars+=abbr[row];});
-      beatStr+=(chars||'.')+'.';
+      const hit=DRUM_INSTS.map((_,row)=>drumPattern[row][step]);
+      const syl=stepSyllables(hit);
+      beatStr+=(syl||'.')+'.';
     }
     parts.push(beatStr.replace(/\.+$/,''));
   }
