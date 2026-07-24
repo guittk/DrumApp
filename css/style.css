@@ -246,12 +246,13 @@ textarea,input{font-family:inherit}
 /* ── EDITOR ──────────────────────────────────────────── */
 #screen-editor{
   height:100vh;height:calc(var(--vh,1vh)*100);
-  display:flex;flex-direction:column;overflow:hidden
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden
 }
 .ed-hd{
   padding:10px 14px;background:var(--surface);
   border-bottom:1px solid var(--border);flex-shrink:0;
-  display:flex;align-items:center;gap:10px
+  display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:5
 }
 .ed-hd-title{font-size:15px;font-weight:700;flex:1}
 .ed-save-btn{
@@ -284,7 +285,7 @@ textarea,input{font-family:inherit}
 }
 .ed-bpm-in:focus{border-color:var(--accent)}
 .ed-bpm-lbl{font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}
-#ed-blocks{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:12px}
+#ed-blocks{padding:10px 14px;display:flex;flex-direction:column;gap:12px}
 .ed-block{
   background:var(--card);border:1px solid var(--border);
   border-radius:12px;overflow:hidden

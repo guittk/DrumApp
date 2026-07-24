@@ -2,20 +2,20 @@
 //  DRUM SEQUENCER
 // ════════════════════════════════════════════════════════
 const DRUM_INSTS=[
+  {key:'hihat_c',label:'HH Fech',bg:'#22C55E',
+   play:(ctx,t)=>synthHihat(ctx,t,false)},
+  {key:'hihat_o',label:'HH Aber',bg:'#86EFAC',
+   play:(ctx,t)=>synthHihat(ctx,t,true)},
   {key:'bumbo',  label:'Bumbo',  bg:'#F97316',
    play:(ctx,t)=>synthKick(ctx,t)},
   {key:'caixa',  label:'Caixa',  bg:'#3B82F6',
    play:(ctx,t)=>synthSnare(ctx,t)},
   {key:'tom',    label:'Tom',    bg:'#FBBF24',
    play:(ctx,t)=>synthTom(ctx,t)},
-  {key:'hihat_c',label:'HH Fech',bg:'#22C55E',
-   play:(ctx,t)=>synthHihat(ctx,t,false)},
-  {key:'hihat_o',label:'HH Aber',bg:'#86EFAC',
-   play:(ctx,t)=>synthHihat(ctx,t,true)},
-  {key:'ride',   label:'Ride',   bg:'#EF4444',
-   play:(ctx,t)=>synthRide(ctx,t)},
   {key:'surdo',  label:'Surdo',  bg:'#A855F7',
-   play:(ctx,t)=>synthSurdo(ctx,t)}
+   play:(ctx,t)=>synthSurdo(ctx,t)},
+  {key:'ride',   label:'Ride',   bg:'#EF4444',
+   play:(ctx,t)=>synthRide(ctx,t)}
 ];
 const STEPS_PER_BAR=16;
 let drumBars=1, drumTotalSteps=16;
@@ -137,9 +137,9 @@ function highlightStep(step){
 }
 
 // ── Generate notation from pattern (Tu/Ta/Tra/Bu/Pam) ──
-// Linhas de DRUM_INSTS: 0 bumbo,1 caixa,2 tom,3 hihat_c,4 hihat_o,5 ride,6 surdo
+// hit: objeto {bumbo,caixa,tom,hihat_c,hihat_o,ride,surdo} -> boolean
 function stepSyllables(hit){
-  const bumbo=hit[0],caixa=hit[1],tom=hit[2],hhC=hit[3],hhO=hit[4],ride=hit[5],surdo=hit[6];
+  const bumbo=hit.bumbo,caixa=hit.caixa,tom=hit.tom,hhC=hit.hihat_c,hhO=hit.hihat_o,ride=hit.ride,surdo=hit.surdo;
   if(caixa&&bumbo){
     let s='Tra';
     if(tom)s+='Tu';
@@ -173,7 +173,8 @@ function patternToNotation(){
     let beatStr='';
     for(let sub=0;sub<4;sub++){
       const step=beat*4+sub;
-      const hit=DRUM_INSTS.map((_,row)=>drumPattern[row][step]);
+      const hit={};
+      DRUM_INSTS.forEach((inst,row)=>{hit[inst.key]=drumPattern[row][step];});
       const syl=stepSyllables(hit);
       beatStr+=(syl||'.')+'.';
     }

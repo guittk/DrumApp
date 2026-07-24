@@ -1,22 +1,24 @@
 // ════════════════════════════════════════════════════════
 //  OPENAI — busca automática de BPM/Duração
 // ════════════════════════════════════════════════════════
-function getOpenAiKey(){
-  let key=localStorage.getItem('thurgh_openai_key');
-  if(!key){
-    key=prompt('Informe sua chave da API da OpenAI (fica salva apenas neste navegador):');
-    if(key)localStorage.setItem('thurgh_openai_key',key.trim());
-  }
-  return key?key.trim():null;
+let _openAiKeyCache=null;
+async function getOpenAiKey(){
+  if(_openAiKeyCache) return _openAiKeyCache;
+  const fromDb=await fbGetConfig('openAiKey');
+  if(fromDb){_openAiKeyCache=fromDb;return fromDb;}
+  return null;
 }
-function changeOpenAiKey(){
+async function changeOpenAiKey(){
   const key=prompt('Nova chave da API da OpenAI:');
-  if(key)localStorage.setItem('thurgh_openai_key',key.trim());
+  if(key){
+    _openAiKeyCache=key.trim();
+    await fbSetConfig('openAiKey',_openAiKeyCache);
+  }
 }
 
 async function fetchBpmDuration(songName){
-  const key=getOpenAiKey();
-  if(!key) throw new Error('Nenhuma chave da API configurada.');
+  const key=await getOpenAiKey();
+  if(!key) throw new Error('Nenhuma chave da API configurada no Firebase (config em "openAiKey").');
   const res=await fetch('https://api.openai.com/v1/chat/completions',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
@@ -42,25 +44,24 @@ async function fetchBpmDuration(songName){
 }
 
 // ── Modal de comparação ─────────────────────────────────
-let bpmModalTarget=null; // {bpmInputId, durationInputId}
-function openBpmSearchModal(nameInputId,bpmInputId,durationInputId){
-  const name=(document.getElementById(nameInputId).value||'').trim();
+// core: name, curBpm, curDuration, onApplyBpm(v), onApplyDuration(v)
+let bpmModalTarget=null;
+function openBpmSearchModalCore(name,curBpm,curDuration,onApplyBpm,onApplyDuration){
+  name=(name||'').trim();
   if(!name){alert('Digite o nome da música primeiro.');return;}
-  bpmModalTarget={bpmInputId,durationInputId};
+  bpmModalTarget={onApplyBpm,onApplyDuration};
   const modal=document.getElementById('bpm-modal');
   const body=document.getElementById('bpm-modal-body');
   body.innerHTML=`<div class="bpm-modal-loading">Buscando BPM e duração de "${esc(name)}"…</div>`;
   modal.classList.remove('hidden');
   fetchBpmDuration(name).then(res=>{
-    const curBpm=document.getElementById(bpmInputId).value||'—';
-    const curDur=document.getElementById(durationInputId)?document.getElementById(durationInputId).value||'—':'—';
     body.innerHTML=`
       <div class="bpm-modal-row">
-        <div class="bpm-modal-col"><span class="bpm-modal-lbl">BPM atual</span><span class="bpm-modal-val">${esc(curBpm)}</span></div>
+        <div class="bpm-modal-col"><span class="bpm-modal-lbl">BPM atual</span><span class="bpm-modal-val">${esc(curBpm||'—')}</span></div>
         <div class="bpm-modal-col"><span class="bpm-modal-lbl">BPM encontrado</span><span class="bpm-modal-val accent">${res.bpm??'—'}</span></div>
       </div>
       <div class="bpm-modal-row">
-        <div class="bpm-modal-col"><span class="bpm-modal-lbl">Duração atual</span><span class="bpm-modal-val">${esc(curDur)}</span></div>
+        <div class="bpm-modal-col"><span class="bpm-modal-lbl">Duração atual</span><span class="bpm-modal-val">${esc(curDuration||'—')}</span></div>
         <div class="bpm-modal-col"><span class="bpm-modal-lbl">Duração encontrada</span><span class="bpm-modal-val accent">${esc(res.duration||'—')}</span></div>
       </div>
       <div class="bpm-modal-actions">
@@ -75,8 +76,25 @@ function openBpmSearchModal(nameInputId,bpmInputId,durationInputId){
 }
 function applyBpmResult(field,value){
   if(!bpmModalTarget)return;
-  const id=field==='bpm'?bpmModalTarget.bpmInputId:bpmModalTarget.durationInputId;
-  const el=document.getElementById(id);
-  if(el)el.value=value;
+  if(field==='bpm')bpmModalTarget.onApplyBpm(value);
+  else bpmModalTarget.onApplyDuration(value);
 }
 function closeBpmModal(){document.getElementById('bpm-modal').classList.add('hidden');bpmModalTarget=null;}
+
+// Editor (Nova/Editar Música)
+function openBpmSearchModal(nameInputId,bpmInputId,durationInputId){
+  const nameEl=document.getElementById(nameInputId);
+  const bpmEl=document.getElementById(bpmInputId);
+  const durEl=document.getElementById(durationInputId);
+  openBpmSearchModalCore(nameEl.value,bpmEl.value,durEl?durEl.value:'',
+    v=>{bpmEl.value=v;},
+    v=>{if(durEl)durEl.value=v;});
+}
+
+// Visualização da música (já salva)
+function openBpmSearchModalForSong(){
+  if(!cur)return;
+  openBpmSearchModalCore(cur.name,cur.bpm,cur.duration,
+    v=>{cur.bpm=v;saveAll();renderSong();},
+    v=>{cur.duration=v;saveAll();renderSong();});
+}

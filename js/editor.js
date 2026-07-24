@@ -104,7 +104,7 @@ function toggleBlockInst(idx,k){
   b.insts=insts;delete b.inst;
   renderEditorBlocks();
 }
-function addEditorBlock(){edBlocks.push({insts:['hihat'],rhythm:'',lyrics:'',pattern:null,bars:1});renderEditorBlocks();setTimeout(()=>{document.getElementById('ed-blocks').scrollTop=9999;},50);}
+function addEditorBlock(){edBlocks.push({insts:['hihat'],rhythm:'',lyrics:'',pattern:null,bars:1});renderEditorBlocks();setTimeout(()=>{document.getElementById('screen-editor').scrollTop=999999;},50);}
 function removeBlock(idx){if(edBlocks.length<=1)return;edBlocks.splice(idx,1);renderEditorBlocks();}
 function moveBlock(idx,dir){const ni=idx+dir;if(ni<0||ni>=edBlocks.length)return;[edBlocks[idx],edBlocks[ni]]=[edBlocks[ni],edBlocks[idx]];renderEditorBlocks();}
 
