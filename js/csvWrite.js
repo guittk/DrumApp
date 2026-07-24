@@ -1,32 +1,6 @@
 // ════════════════════════════════════════════════════════
-//  CSV WRITE-BACK (File System Access API, com fallback)
+//  CSV EXPORT — Database → arquivo .csv (mesmo formato do import)
 // ════════════════════════════════════════════════════════
-let csvFileHandle=null;
-
-function csvWriteSupported(){return typeof window.showOpenFilePicker==='function';}
-
-async function connectCsvFile(){
-  if(!csvWriteSupported()){
-    alert('Seu navegador não suporta conectar diretamente ao arquivo. As alterações serão baixadas como musicas.csv — substitua o arquivo manualmente.');
-    return;
-  }
-  try{
-    const [handle]=await window.showOpenFilePicker({types:[{description:'CSV',accept:{'text/csv':['.csv']}}]});
-    csvFileHandle=handle;
-    const file=await handle.getFile();
-    const text=await file.text();
-    processCSV(text);
-    updateCsvStatus();
-  }catch(e){ if(e && e.name!=='AbortError') console.error(e); }
-}
-
-function updateCsvStatus(){
-  const el=document.getElementById('csv-connect-btn');
-  if(!el)return;
-  el.textContent=csvFileHandle?'🔗 CSV conectado':'🔗 Conectar CSV';
-  el.classList.toggle('active',!!csvFileHandle);
-}
-
 function downloadCsvFallback(text){
   const blob=new Blob([text],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
@@ -36,15 +10,16 @@ function downloadCsvFallback(text){
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 }
 
-async function writeCsvBack(){
+async function exportCsv(){
   const text=serializeCSV(songs);
-  if(csvFileHandle){
+  if(typeof window.showSaveFilePicker==='function'){
     try{
-      const writable=await csvFileHandle.createWritable();
+      const handle=await window.showSaveFilePicker({suggestedName:'musicas.csv',types:[{description:'CSV',accept:{'text/csv':['.csv']}}]});
+      const writable=await handle.createWritable();
       await writable.write(text);
       await writable.close();
       return;
-    }catch(e){console.error(e);}
+    }catch(e){ if(e&&e.name==='AbortError')return; console.error(e); }
   }
   downloadCsvFallback(text);
 }

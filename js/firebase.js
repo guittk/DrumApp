@@ -24,3 +24,35 @@ function fbSetConfig(path,value){
   if(!fbDb) return Promise.resolve();
   return fbDb.ref(path).set(value).catch(e=>console.error(e));
 }
+
+// ════════════════════════════════════════════════════════
+//  SONGS — Firebase Realtime Database é a fonte da verdade
+// ════════════════════════════════════════════════════════
+function songsRef(){return fbDb?fbDb.ref('songs'):null;}
+function songKey(name){return encodeURIComponent(name).replace(/\./g,'%2E');}
+
+async function fbLoadSongs(){
+  const ref=songsRef();
+  if(!ref) return [];
+  try{
+    const snap=await ref.once('value');
+    return Object.values(snap.val()||{});
+  }catch(e){console.error(e);return [];}
+}
+function fbSaveSong(song){
+  const ref=songsRef();
+  if(!ref||!song) return Promise.resolve();
+  return ref.child(songKey(song.name)).set(JSON.parse(JSON.stringify(song))).catch(e=>console.error(e));
+}
+function fbSaveSongs(list){
+  const ref=songsRef();
+  if(!ref||!list||!list.length) return Promise.resolve();
+  const updates={};
+  list.forEach(s=>{updates[songKey(s.name)]=JSON.parse(JSON.stringify(s));});
+  return ref.update(updates).catch(e=>console.error(e));
+}
+function fbDeleteSong(name){
+  const ref=songsRef();
+  if(!ref) return Promise.resolve();
+  return ref.child(songKey(name)).remove().catch(e=>console.error(e));
+}

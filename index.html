@@ -10,6 +10,7 @@
 
 <!-- ══ UPLOAD ════════════════════════════════════════ -->
 <div id="screen-upload">
+  <button class="back-btn hidden" id="up-back-btn" onclick="goList()">← Voltar</button>
   <div class="up-wrap">
     <div class="up-logo">THURGH</div>
     <div class="up-sub">Sheet de Bateria</div>
@@ -19,7 +20,7 @@
       <div class="drop-text">Arraste o <strong>.CSV</strong> aqui ou clique para selecionar</div>
       <span class="drop-btn">Selecionar arquivo</span>
     </div>
-    <div class="up-tip">Dica: nomeie o arquivo <b>musicas.csv</b> na mesma pasta do <b>thurgh-sheet.html</b></div>
+    <div class="up-tip">O CSV será comparado com o <b>Database</b>. Se houver divergências, você escolhe qual versão manter.</div>
     <div id="up-err"></div>
   </div>
 </div>
@@ -32,8 +33,8 @@
       <button class="pill-btn" id="week-btn" onclick="toggleWeek()">★ Semana</button>
       <button class="pill-btn" onclick="openEditor()">✏️ Nova</button>
       <button class="pill-btn" onclick="goTags()">⚙️ Tags</button>
-      <button class="pill-btn" id="csv-connect-btn" onclick="connectCsvFile()">🔗 Conectar CSV</button>
-      <button class="pill-btn" onclick="goUpload()">📁</button>
+      <button class="pill-btn" onclick="goUpload()">📥 Importar CSV</button>
+      <button class="pill-btn" onclick="exportCsv()">📤 Exportar CSV</button>
     </div>
     <div class="search-wrap">
       <span class="search-ico">🔍</span>
@@ -147,12 +148,28 @@
   <div class="ed-hd">
     <button class="back-btn" onclick="goList()">← Voltar</button>
     <span class="ed-hd-title">Configurar Tags</span>
-    <button class="ed-save-btn" onclick="addTagRow()">＋ Nova</button>
+    <button class="ed-save-btn" id="tags-add-btn" onclick="addTagsScreenItem()">＋ Nova</button>
+  </div>
+  <div class="tags-tabs">
+    <button class="tags-tab-btn active" id="tab-tags-btn" onclick="setTagsTab('tags')">Tags</button>
+    <button class="tags-tab-btn" id="tab-palette-btn" onclick="setTagsTab('palette')">Cores predefinidas</button>
   </div>
   <div id="tags-list" class="tags-list"></div>
+  <div id="palette-list" class="tags-list hidden"></div>
   <div class="ed-add-wrap">
-    <button class="ed-add-btn" onclick="resetTagsRow()">↺ Restaurar padrão</button>
+    <button class="ed-add-btn" id="tags-reset-btn" onclick="resetTagsScreenItem()">↺ Restaurar padrão</button>
   </div>
+</div>
+
+<!-- ══ CSV IMPORT — DIVERGÊNCIAS ══════════════════════ -->
+<div id="screen-csv-diff" class="hidden">
+  <div class="ed-hd">
+    <button class="back-btn" onclick="cancelCsvImport()">← Cancelar</button>
+    <span class="ed-hd-title">Importar CSV</span>
+    <button class="ed-save-btn" onclick="confirmCsvImport()">✓ Confirmar</button>
+  </div>
+  <div id="csv-diff-summary" class="csv-diff-summary"></div>
+  <div id="csv-diff-list" class="csv-diff-list"></div>
 </div>
 
 <!-- ══ BPM/DURATION MODAL ════════════════════════════ -->

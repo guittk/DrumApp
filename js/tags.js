@@ -17,6 +17,7 @@ const DEFAULT_TAGS=[
   {k:'virada',    label:'Virada',     bg:'#FFD580',tx:'#1a1000',keyword:'virada'},
   {k:'pratos',    label:'Pratos',     bg:'#FF7777',tx:'#111',   keyword:'\\bprato'}
 ];
+const DEFAULT_PALETTE=[...new Set(DEFAULT_TAGS.map(t=>t.bg))];
 
 function getTags(){
   try{
@@ -50,27 +51,56 @@ function getAllCols(ann){
   const matches=list.filter(t=>t.keyword&&tagRegex(t).test(ann||''));
   return matches.length?matches:[DEFAULT_TAG];
 }
-function blendColors(hexArr){
-  const arr=(hexArr||[]).filter(Boolean);
-  if(!arr.length)return '#7C5CFC';
-  if(arr.length===1)return arr[0];
-  let r=0,g=0,b=0;
-  arr.forEach(hex=>{
-    const h=hex.replace('#','');
-    r+=parseInt(h.substring(0,2),16);g+=parseInt(h.substring(2,4),16);b+=parseInt(h.substring(4,6),16);
-  });
-  r=Math.round(r/arr.length);g=Math.round(g/arr.length);b=Math.round(b/arr.length);
-  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+function contrastText(hex){
+  const h=(hex||'').replace('#','');
+  if(h.length!==6)return '#111';
+  const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
+  const luma=(0.299*r+0.587*g+0.114*b)/255;
+  return luma>0.6?'#111':'#fff';
 }
 
+// ── COLOR PALETTE (predefined colors used by tags) ──────
+function getPalette(){
+  try{
+    const raw=localStorage.getItem('thurgh_palette');
+    if(raw){const list=JSON.parse(raw);if(Array.isArray(list)&&list.length)return list;}
+  }catch(e){}
+  setPalette([...DEFAULT_PALETTE]);
+  return getPalette();
+}
+function setPalette(list){try{localStorage.setItem('thurgh_palette',JSON.stringify(list));}catch(e){}}
+function resetPaletteDefault(){setPalette([...DEFAULT_PALETTE]);renderPaletteScreen();}
+function addPaletteColor(){const list=getPalette();list.push('#D0D0D0');setPalette(list);renderPaletteScreen();}
+function updatePaletteColor(idx,hex){const list=getPalette();list[idx]=hex;setPalette(list);renderPaletteScreen();}
+function removePaletteColor(idx){const list=getPalette();list.splice(idx,1);setPalette(list);renderPaletteScreen();}
+
 // ── TAGS SCREEN ─────────────────────────────────────────
-function goTags(){show('screen-tags');renderTagsScreen();}
+let tagsTab='tags';
+function goTags(){show('screen-tags');renderTagsScreen();renderPaletteScreen();setTagsTab(tagsTab);}
+function setTagsTab(tab){
+  tagsTab=tab;
+  document.getElementById('tab-tags-btn').classList.toggle('active',tab==='tags');
+  document.getElementById('tab-palette-btn').classList.toggle('active',tab==='palette');
+  document.getElementById('tags-list').classList.toggle('hidden',tab!=='tags');
+  document.getElementById('palette-list').classList.toggle('hidden',tab!=='palette');
+  document.getElementById('tags-add-btn').textContent=tab==='tags'?'＋ Nova':'＋ Nova cor';
+  document.getElementById('tags-reset-btn').textContent=tab==='tags'?'↺ Restaurar tags padrão':'↺ Restaurar cores padrão';
+}
+function addTagsScreenItem(){tagsTab==='tags'?addTagRow():addPaletteColor();}
+function resetTagsScreenItem(){tagsTab==='tags'?resetTagsRow():(confirm('Restaurar as cores predefinidas para o padrão?')&&resetPaletteDefault());}
+
+function tagColorSwatches(t){
+  return getPalette().map(hex=>`
+    <button type="button" class="tag-swatch${t.bg.toLowerCase()===hex.toLowerCase()?' sel':''}"
+      style="background:${hex}" title="${hex}"
+      onclick="updateTag('${t.k}',{bg:'${hex}',tx:'${contrastText(hex)}'});renderTagsScreen()"></button>`).join('');
+}
 function renderTagsScreen(){
   const el=document.getElementById('tags-list');
   const list=getTags();
   el.innerHTML=list.map(t=>`
     <div class="tag-row" data-k="${t.k}">
-      <input class="tag-color-in" type="color" value="${t.bg}" oninput="updateTag('${t.k}',{bg:this.value})">
+      <div class="tag-color-picker">${tagColorSwatches(t)}</div>
       <input class="tag-label-in" type="text" value="${esc(t.label)}" placeholder="Nome da tag" oninput="updateTag('${t.k}',{label:this.value})">
       <input class="tag-keyword-in" type="text" value="${esc(t.keyword)}" placeholder="palavra-chave" oninput="updateTag('${t.k}',{keyword:this.value})">
       <button class="tag-del-btn" onclick="removeTagRow('${t.k}')">✕</button>
@@ -80,7 +110,19 @@ function removeTagRow(k){removeTag(k);renderTagsScreen();}
 function addTagRow(){
   const label='Nova Tag';
   const k=slugifyTagKey(label);
-  addTag({k,label,bg:'#D0D0D0',tx:'#111',keyword:escRegex(label)});
+  const bg=getPalette()[0]||'#D0D0D0';
+  addTag({k,label,bg,tx:contrastText(bg),keyword:escRegex(label)});
   renderTagsScreen();
 }
 function resetTagsRow(){if(confirm('Restaurar as tags para o padrão? Isso apaga suas personalizações.')){resetTagsDefault();renderTagsScreen();}}
+
+function renderPaletteScreen(){
+  const el=document.getElementById('palette-list');
+  const list=getPalette();
+  el.innerHTML=list.map((hex,idx)=>`
+    <div class="tag-row" data-idx="${idx}">
+      <input class="tag-color-in" type="color" value="${hex}" oninput="updatePaletteColor(${idx},this.value)">
+      <span class="palette-hex">${hex}</span>
+      <button class="tag-del-btn" onclick="removePaletteColor(${idx})">✕</button>
+    </div>`).join('');
+}

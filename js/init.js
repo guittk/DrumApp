@@ -9,11 +9,13 @@
   document.getElementById('file-input').addEventListener('change',e=>{if(e.target.files[0])readFile(e.target.files[0]);});
 
   loadStore(); applyFs();
+  if(songs.length) goList(); // mostra o cache local instantaneamente enquanto busca o Database
 
-  if(songs.length){goList();}
-  else{
-    await Promise.race([tryAutoLoad(),new Promise(r=>setTimeout(r,800))]);
-    if(!songs.length) show('screen-upload');
+  const fresh=await fbLoadSongs();
+  if(fresh.length){
+    songs=fresh; saveAll(); goList();
+  }else if(!songs.length){
+    show('screen-upload');
   }
 })();
 

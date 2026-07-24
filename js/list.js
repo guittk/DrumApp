@@ -23,17 +23,16 @@ function renderList(){
   } else {
     el.innerHTML=list.map(s=>{
       const si=songs.indexOf(s),isFav=favs.has(s.name);
-      const badge=s.created?'<span class="song-badge">✏️</span>':'';
       return `<div class="song-item" data-si="${si}">
         <div class="song-info">
-          <div class="song-name${isFav?' is-fav':''}">${esc(s.name)}${badge}</div>
+          <div class="song-name${isFav?' is-fav':''}">${esc(s.name)}</div>
           <div class="song-meta">${s.sections} seções${s.bpm?' · '+s.bpm+' BPM':''}</div>
         </div>
         <button class="fav-btn${isFav?' active':''}" data-si="${si}">${isFav?'★':'☆'}</button>
       </div>`;
     }).join('');
     el.querySelectorAll('.song-item').forEach(row=>{
-      row.addEventListener('click',e=>{if(e.target.classList.contains('fav-btn'))return;const s=songs[+row.dataset.si];if(s.created)openEditor(s);else goSong(s);});
+      row.addEventListener('click',e=>{if(e.target.classList.contains('fav-btn'))return;goSong(songs[+row.dataset.si]);});
     });
     el.querySelectorAll('.fav-btn').forEach(btn=>{
       btn.addEventListener('click',e=>{e.stopPropagation();toggleFav(songs[+btn.dataset.si].name);});

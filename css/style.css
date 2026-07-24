@@ -30,10 +30,12 @@ textarea,input{font-family:inherit}
 
 /* ── UPLOAD ─────────────────────────────────────────── */
 #screen-upload{
+  position:relative;
   height:100vh;height:calc(var(--vh,1vh)*100);
   display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at 50% 40%,#1c1c1c 0%,var(--bg) 70%)
 }
+#up-back-btn{position:absolute;top:16px;left:16px}
 .up-wrap{text-align:center;max-width:460px;padding:24px;width:100%}
 .up-logo{font-size:52px;font-weight:900;letter-spacing:5px;
   text-shadow:0 0 60px rgba(124,92,252,.8);margin-bottom:4px}
@@ -83,11 +85,6 @@ textarea,input{font-family:inherit}
   overflow:hidden;white-space:nowrap;text-overflow:ellipsis
 }
 .song-name.is-fav{color:#f0c040}
-.song-badge{
-  display:inline-block;font-size:10px;font-weight:700;
-  padding:1px 6px;border-radius:4px;margin-left:6px;
-  background:var(--accent);color:#fff;vertical-align:middle;opacity:.8
-}
 .song-meta{font-size:11px;color:var(--muted);margin-top:3px}
 .fav-btn{font-size:22px;padding:2px 8px;color:var(--muted);
   transition:color .15s,transform .12s;flex-shrink:0}
@@ -137,7 +134,6 @@ textarea,input{font-family:inherit}
   padding:4px 11px 4px 8px;border-radius:14px;font-size:11px;font-weight:700;
   border:1px solid transparent
 }
-.leg-icon{font-size:13px;line-height:1}
 
 /* ── SHEET BODY (redesigned) ─────────────────────────
    Modern, dark music notation feel: rounded section
@@ -187,7 +183,6 @@ textarea,input{font-family:inherit}
   border-bottom:1px solid transparent;
   /* background and border-color set inline */
 }
-.sec-icon{font-size:calc(var(--fs) - 1px);line-height:1;flex-shrink:0}
 .sec-type{font-weight:900;font-size:calc(var(--fs) + 1px)}
 .sec-rhythm{font-weight:500;font-size:calc(var(--fs) - 2px);opacity:.85;color:#c8c4d8}
 .sheet-section-hd strong{font-weight:900}
@@ -338,6 +333,7 @@ textarea,input{font-family:inherit}
   width:100%;background:transparent;border:none;
   padding:10px 12px;color:var(--text);font-size:15px;
   line-height:1.7;resize:none;outline:none;min-height:80px;
+  overflow:hidden;
 }
 .ed-lyrics-ta::placeholder{color:var(--muted)}
 .ed-add-wrap{padding:12px 14px 20px;flex-shrink:0}
@@ -426,12 +422,22 @@ textarea,input{font-family:inherit}
 
 /* ── TAGS CONFIG ─────────────────────────────────────── */
 #screen-tags{height:100vh;height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column;overflow:hidden}
+.tags-tabs{display:flex;gap:6px;padding:10px 14px 0;flex-shrink:0}
+.tags-tab-btn{
+  flex:1;padding:9px;border-radius:8px 8px 0 0;font-size:13px;font-weight:700;
+  background:var(--surface);color:var(--muted);border:1px solid var(--border);border-bottom:none
+}
+.tags-tab-btn.active{background:var(--card);color:var(--text)}
 .tags-list{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
 .tag-row{
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card);
   border:1px solid var(--border);border-radius:10px;padding:8px 10px
 }
 .tag-color-in{width:34px;height:34px;border:none;border-radius:8px;background:none;flex-shrink:0;cursor:pointer;padding:0}
+.tag-color-picker{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}
+.tag-swatch{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0}
+.tag-swatch.sel{border-color:var(--text);box-shadow:0 0 0 1px var(--card)}
+.palette-hex{flex:1 1 100px;font-family:'Courier New',monospace;font-size:13px;color:var(--muted)}
 .tag-label-in,.tag-keyword-in{
   background:var(--surface);border:1px solid var(--border);border-radius:6px;
   padding:7px 9px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s;
@@ -442,6 +448,21 @@ textarea,input{font-family:inherit}
 .tag-label-in:focus,.tag-keyword-in:focus{border-color:var(--accent)}
 .tag-del-btn{width:28px;height:28px;border-radius:6px;font-size:13px;background:var(--border);color:var(--muted);flex-shrink:0;transition:background .12s}
 .tag-del-btn:hover{background:#EF4444;color:#fff}
+
+/* ── CSV IMPORT DIFF ─────────────────────────────────── */
+#screen-csv-diff{height:100vh;height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column;overflow:hidden}
+.csv-diff-summary{padding:10px 14px;color:var(--muted);font-size:13px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.csv-diff-list{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:10px}
+.csv-diff-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.csv-diff-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.csv-diff-name{font-weight:700;font-size:14px}
+.csv-diff-choice{display:flex;gap:6px}
+.csv-choice-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--surface);border:1px solid var(--border);color:var(--muted)}
+.csv-choice-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.csv-diff-body{font-family:'Courier New',monospace;font-size:12px;line-height:1.6;background:var(--surface);border-radius:8px;padding:8px 10px;max-height:220px;overflow-y:auto}
+.csv-diff-line{white-space:pre-wrap;word-break:break-word;padding:1px 4px;border-radius:3px}
+.csv-diff-line.add{background:rgba(34,197,94,.15);color:#86efac}
+.csv-diff-line.del{background:rgba(239,68,68,.15);color:#fca5a5;text-decoration:line-through;opacity:.8}
 
 /* ── MODAL ───────────────────────────────────────────── */
 .modal-overlay{
@@ -459,11 +480,14 @@ textarea,input{font-family:inherit}
 .modal-close-btn{font-size:15px;color:var(--muted);padding:2px 6px}
 .modal-close-btn:hover{color:var(--text)}
 .modal-body{padding:16px;display:flex;flex-direction:column;gap:14px}
-.bpm-modal-row{display:flex;gap:10px}
-.bpm-modal-col{flex:1;display:flex;flex-direction:column;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 10px}
-.bpm-modal-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.bpm-modal-val{font-size:16px;font-weight:700}
-.bpm-modal-val.accent{color:var(--accent)}
+.bpm-modal-row{display:flex;flex-direction:column;gap:6px}
+.bpm-modal-field-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.bpm-field-choice{display:flex;gap:8px}
+.bpm-choice-btn{flex:1;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:600;
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+  text-align:center;transition:all .15s}
+.bpm-choice-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.bpm-choice-btn.disabled{opacity:.4;cursor:not-allowed}
 .bpm-modal-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .bpm-modal-loading,.bpm-modal-error{font-size:13px;color:var(--muted);text-align:center;padding:10px 0}
 .bpm-modal-error{color:#EF4444}
@@ -490,7 +514,6 @@ textarea,input{font-family:inherit}
   .legend-strip{padding:9px 14px;gap:7px}
   .leg-pill{padding:5px 12px 5px 9px}
   .leg-pill span:last-child{font-size:13px!important}
-  .leg-icon{font-size:15px}
   .sheet-section-hd{padding:11px 14px}
   .sheet-lyric-line{padding:8px 14px 8px 18px;line-height:1.85}
   .playbar{padding:14px 14px;padding-bottom:max(18px,env(safe-area-inset-bottom))}

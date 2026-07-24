@@ -16,7 +16,6 @@ function renderSong(){
   });
   document.getElementById('legend').innerHTML=[...seen.values()].map(c=>
     `<span class="leg-pill" style="background:${c.bg}18;border-color:${c.bg}55">
-      <span class="leg-icon">${getIcon(c.label)}</span>
       <span style="color:${c.bg};font-weight:700">${c.label}</span>
     </span>`).join('');
 
@@ -58,11 +57,9 @@ function renderSong(){
     let headHtml='',color='#7C5CFC';
     if(s.ann){
       const cols=getAllCols(s.ann.text);
-      color=cols.length>1?blendColors(cols.map(c=>c.bg)):s.ann.bg;
-      const icons=cols.map(c=>getIcon(c.label)).join(' ');
+      color=cols[0]?cols[0].bg:s.ann.bg;
       const {type,rest}=parseAnn(s.ann.text);
       headHtml=`<div class="sheet-section-hd" style="background:${color}22;border-color:${color}66">
-        <span class="sec-icon">${icons}</span>
         <span class="sec-type" style="color:${color}">${boldify(type)}</span>
         ${rest?`<span class="sec-rhythm">${boldify(rest)}</span>`:''}
       </div>`;

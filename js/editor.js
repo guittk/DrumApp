@@ -24,7 +24,7 @@ function openEditor(song){
   show('screen-editor');
   renderEditorBlocks();
 }
-function cancelEditor(){goList();}
+function cancelEditor(){edEditingSong?goSong(cur):goList();}
 
 // Converte uma música (vinda do CSV, sem edBlocks) em blocos editáveis
 function songToEdBlocks(song){
@@ -65,7 +65,7 @@ function renderEditorBlocks(){
         style="background:${opt.bg};color:${opt.tx}"
         onclick="toggleBlockInst(${i},'${opt.k}')">${esc(opt.label)}</button>`).join('');
     const selCols=insts.map(k=>tags.find(o=>o.k===k)).filter(Boolean);
-    const borderColor=blendColors(selCols.map(c=>c.bg));
+    const borderColor=selCols[0]?selCols[0].bg:'#7C5CFC';
     return `<div class="ed-block" id="edblock-${i}">
       <div class="ed-block-hd" style="border-left:3px solid ${borderColor}">
         <span class="ed-block-num">${i+1}</span>
@@ -90,9 +90,15 @@ function renderEditorBlocks(){
       <textarea class="ed-lyrics-ta" id="ed-lyrics-${i}"
         placeholder="Letras (uma linha por vez)…"
         rows="4"
-        oninput="edBlocks[${i}].lyrics=this.value">${esc(b.lyrics||'')}</textarea>
+        oninput="edBlocks[${i}].lyrics=this.value;autoGrowTextarea(this)">${esc(b.lyrics||'')}</textarea>
     </div>`;
   }).join('');
+  el.querySelectorAll('.ed-lyrics-ta').forEach(autoGrowTextarea);
+}
+
+function autoGrowTextarea(el){
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
 }
 
 function toggleBlockInst(idx,k){
@@ -124,7 +130,7 @@ function saveEditorSong(){
     const insts=blockInsts(b);
     const cols=insts.map(k=>tags.find(o=>o.k===k)).filter(Boolean);
     const label=cols.map(c=>c.label).filter(Boolean).join(' + ')||'Outro';
-    const bg=blendColors(cols.map(c=>c.bg))||'#D0D0D0';
+    const bg=cols[0]?cols[0].bg:'#D0D0D0';
     const tx=cols[0]?cols[0].tx:'#111';
     const annText=`[${label}]${b.rhythm?' ('+b.rhythm+')':''}`;
     items.push({type:'ann',text:annText,bg,tx,bars:b.bars});
@@ -137,19 +143,22 @@ function saveEditorSong(){
   const dom=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'#7C5CFC';
   const sections=items.filter(x=>x.type==='ann').length;
 
-  const song={name,bpm,duration,items,dom,sections,created:true,
-    col:edEditingSong&&edEditingSong.col!==undefined?edEditingSong.col:undefined,
+  const song={name,bpm,duration,items,dom,sections,
     edBlocks:JSON.parse(JSON.stringify(edBlocks))};
 
   if(edEditingSong){
-    const idx=songs.indexOf(edEditingSong);
+    let idx=songs.indexOf(edEditingSong);
+    if(idx<0) idx=songs.findIndex(s=>s.name===edEditingSong.name);
     if(idx>=0) songs[idx]=song;
     else songs.push(song);
   } else {
     songs.push(song);
   }
-  if(oldName&&oldName!==name&&favs.has(oldName)){favs.delete(oldName);favs.add(name);}
+  if(oldName&&oldName!==name){
+    if(favs.has(oldName)){favs.delete(oldName);favs.add(name);}
+    fbDeleteSong(oldName);
+  }
   saveAll();
-  if(typeof writeCsvBack==='function')writeCsvBack();
-  goList();
+  fbSaveSong(song);
+  edEditingSong?goSong(song):goList();
 }
