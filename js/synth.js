@@ -9,6 +9,12 @@ function getCtx(){
   return audioCtx;
 }
 
+function synthTick(ctx,t,accent=false){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='square';o.frequency.setValueAtTime(accent?2200:1500,t);
+  g.gain.setValueAtTime(accent?.35:.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.045);
+  o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.05);
+}
 function synthKick(ctx,t,vel=1){
   const o=ctx.createOscillator(),g=ctx.createGain();
   o.type='sine';o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(40,t+0.35);

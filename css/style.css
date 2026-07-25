@@ -186,8 +186,11 @@ textarea,input{font-family:inherit}
   font-size:var(--fs);font-weight:700;
   line-height:1.5;word-break:break-word;
   border-bottom:1px solid transparent;
+  cursor:pointer;transition:box-shadow .15s;
   /* background and border-color set inline */
 }
+.sheet-section-hd.play-start-marker{box-shadow:inset 0 0 0 2px var(--accent)}
+.sheet-section-hd.play-start-marker::before{content:'▶';color:var(--accent);font-size:calc(var(--fs) - 3px)}
 .sec-type{font-weight:900;font-size:calc(var(--fs) + 1px)}
 .sec-rhythm{font-weight:500;font-size:calc(var(--fs) - 2px);opacity:.85;color:#b9c7b6}
 .sheet-section-hd strong{font-weight:900}
@@ -244,6 +247,13 @@ textarea,input{font-family:inherit}
   15%{transform:scale(1.14);box-shadow:0 4px 28px -2px rgba(var(--accent-rgb),.9)}
   100%{transform:scale(1);box-shadow:0 4px 20px -4px rgba(var(--accent-rgb),.6)}
 }
+.pb-tick-btn{
+  width:34px;height:34px;border-radius:50%;font-size:14px;
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+  flex-shrink:0;opacity:.5;transition:background .12s,border-color .12s,opacity .12s,color .12s
+}
+.pb-tick-btn:hover{border-color:var(--muted);opacity:.8}
+.pb-tick-btn.active{background:rgba(var(--accent-rgb),.15);border-color:var(--accent-line);color:var(--accent);opacity:1}
 .dur-grp{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
 .dur-in{
   background:var(--card);border:1px solid var(--border);

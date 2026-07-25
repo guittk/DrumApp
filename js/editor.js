@@ -103,7 +103,7 @@ function blockHtml(b,i,tags){
         </div>
       </div>
       <input class="ed-rhythm-in" id="ed-rhythm-${i}"
-        placeholder="(ritmo manual, ex: Tu.. Ta.. Tu.. Ta...)"
+        placeholder="(ritmo manual, ex: Tu Ta Tu Ta)"
         value="${esc(b.rhythm||'')}"
         oninput="edBlocks[${i}].rhythm=this.value">
       <textarea class="ed-lyrics-ta" id="ed-lyrics-${i}"

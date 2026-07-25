@@ -8,6 +8,7 @@ function renderSong(){
   syncFavBtn();
   manualDurVal=cur.duration||'3:30';
   document.getElementById('dur-in').value=manualDurVal;
+  playStartY=0; // nova música: play recomeça do topo até o usuário marcar um bloco
 
   // Legend
   const seen=new Map();
@@ -75,15 +76,21 @@ function renderSong(){
       tagKey=cols[0]?cols[0].k:null;
       const {type,rest}=parseAnn(s.ann.text);
       const borderStyle=noLyrics?'':`;border-color:${color}66`;
-      const headTimeAttr=(noLyrics&&secDur!==null)?` data-t0="${tSec.toFixed(3)}" data-t1="${(tSec+secDur).toFixed(3)}"`:'';
-      headHtml=`<div class="sheet-section-hd"${headTimeAttr} style="background:${color}22${borderStyle}">
+      // Every header gets a data-t0 anchor (for pixel↔tempo interpolation when a
+      // marked start point sits on it) but only a lyric-less header is a valid
+      // "now playing" highlight target (data-hl) — one with lyrics below just
+      // marks the section's start instant, zero-width, so it never gets picked.
+      const headT1=noLyrics?tSec+(secDur||0):tSec;
+      const headTimeAttr=secDur!==null?` data-t0="${tSec.toFixed(3)}" data-t1="${headT1.toFixed(3)}"${noLyrics?' data-hl="1"':''}`:'';
+      headHtml=`<div class="sheet-section-hd"${headTimeAttr} style="background:${color}22${borderStyle}"
+        onclick="setPlayStart(this)" title="Toque para começar o play a partir daqui">
         <span class="sec-type" style="color:${color}">${boldify(type)}</span>
         ${rest?`<span class="sec-rhythm">${boldify(rest)}</span>`:''}
       </div>`;
     }
     const lineDur=(secDur!==null&&s.lyrics.length)?secDur/s.lyrics.length:null;
     const lyricsHtml=s.lyrics.map((l,li)=>{
-      const timeAttr=lineDur!==null?` data-t0="${(tSec+li*lineDur).toFixed(3)}" data-t1="${(tSec+(li+1)*lineDur).toFixed(3)}"`:'';
+      const timeAttr=lineDur!==null?` data-t0="${(tSec+li*lineDur).toFixed(3)}" data-t1="${(tSec+(li+1)*lineDur).toFixed(3)}" data-hl="1"`:'';
       return `<div class="sheet-lyric-line"${timeAttr}>${boldify(l.text)}</div>`;
     }).join('');
     const bodyHtml=noLyrics?'':`<div class="sheet-section-body">${lyricsHtml}</div>`;

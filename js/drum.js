@@ -21,10 +21,10 @@ const DRUM_INSTS=[
 // Estado de uma célula do sequenciador: 0=vazia, 1=nota normal, 2=ghost note (mais fraca)
 function cellState(v){return v===2?2:(v?1:0);}
 function compassoLabel(n){return n===6?'6/8':n+'/4';}
-// Batidas por compasso — vem do "Compasso" da música (2/4,3/4,4/4,6/8); cada batida
-// ainda é subdividida em 4 (semicolcheias), então 6/8 dá 6 células em vez de 4.
+// Batidas por compasso — vem do "Compasso" da música (2/4,3/4,4/4,6/8). Uma célula
+// = uma batida (sem subdivisão), então 6/8 dá 6 drum-cell por compasso, e 4/4 dá 4.
 let drumBeatsPerBar=4;
-function stepsPerBar(){return drumBeatsPerBar*4;}
+function stepsPerBar(){return drumBeatsPerBar;}
 let drumBars=1, drumTotalSteps=16;
 let drumPattern=DRUM_INSTS.map(()=>Array(32).fill(false));
 let drumBlockIdx=-1;
@@ -70,10 +70,10 @@ function renderDrumGrid(){
   const grid=document.getElementById('drum-grid');
   grid.innerHTML=DRUM_INSTS.map((inst,row)=>{
     const groups=[];
-    for(let beat=0;beat<drumBars*drumBeatsPerBar;beat++){
+    for(let bar=0;bar<drumBars;bar++){
       const cells=[];
-      for(let sub=0;sub<4;sub++){
-        const step=beat*4+sub;
+      for(let beat=0;beat<drumBeatsPerBar;beat++){
+        const step=bar*drumBeatsPerBar+beat;
         if(step>=drumTotalSteps) continue;
         const state=cellState(drumPattern[row][step]);
         const canGhost=inst.key==='caixa';
@@ -130,7 +130,7 @@ function stopDrumPlay(){
 function scheduleDrum(){
   if(!drumPlaying) return;
   const ctx=getCtx();
-  const secPerStep=(60/parseInt(document.getElementById('drum-bpm').value||100))/4;
+  const secPerStep=60/parseInt(document.getElementById('drum-bpm').value||100);
   const LOOK=0.12;
   while(drumNextTime<ctx.currentTime+LOOK){
     const step=drumStep%drumTotalSteps;
@@ -183,25 +183,18 @@ function stepSyllables(hit){
   return s;
 }
 function patternToNotation(){
-  const steps=drumTotalSteps;
-  const beats=steps/4;
   const parts=[];
-  for(let beat=0;beat<beats;beat++){
-    let beatStr='';
-    for(let sub=0;sub<4;sub++){
-      const step=beat*4+sub;
-      const hit={};
-      let anyOn=false,allGhost=true;
-      DRUM_INSTS.forEach((inst,row)=>{
-        const state=cellState(drumPattern[row][step]);
-        hit[inst.key]=state>0;
-        if(state){anyOn=true;if(state!==2)allGhost=false;}
-      });
-      let syl=stepSyllables(hit);
-      if(syl&&anyOn&&allGhost) syl='('+syl.toLowerCase()+')'; // ghost note: entre parênteses e minúsculo
-      beatStr+=(syl||'.')+'.';
-    }
-    parts.push(beatStr.replace(/\.+$/,''));
+  for(let step=0;step<drumTotalSteps;step++){
+    const hit={};
+    let anyOn=false,allGhost=true;
+    DRUM_INSTS.forEach((inst,row)=>{
+      const state=cellState(drumPattern[row][step]);
+      hit[inst.key]=state>0;
+      if(state){anyOn=true;if(state!==2)allGhost=false;}
+    });
+    let syl=stepSyllables(hit);
+    if(syl&&anyOn&&allGhost) syl='('+syl.toLowerCase()+')'; // ghost note: entre parênteses e minúsculo
+    parts.push(syl||'.');
   }
   return parts.join(' ').trim();
 }
