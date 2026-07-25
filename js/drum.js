@@ -20,7 +20,11 @@ const DRUM_INSTS=[
 ];
 // Estado de uma célula do sequenciador: 0=vazia, 1=nota normal, 2=ghost note (mais fraca)
 function cellState(v){return v===2?2:(v?1:0);}
-const STEPS_PER_BAR=16;
+function compassoLabel(n){return n===6?'6/8':n+'/4';}
+// Batidas por compasso — vem do "Compasso" da música (2/4,3/4,4/4,6/8); cada batida
+// ainda é subdividida em 4 (semicolcheias), então 6/8 dá 6 células em vez de 4.
+let drumBeatsPerBar=4;
+function stepsPerBar(){return drumBeatsPerBar*4;}
 let drumBars=1, drumTotalSteps=16;
 let drumPattern=DRUM_INSTS.map(()=>Array(32).fill(false));
 let drumBlockIdx=-1;
@@ -30,18 +34,21 @@ let drumPlaying=false, drumStep=0, drumNextTime=0, drumTimerId=null;
 function openDrum(blockIdx){
   drumBlockIdx=blockIdx;
   const b=edBlocks[blockIdx];
+  const beatEl=document.getElementById('ed-beat');
+  drumBeatsPerBar=parseInt(beatEl&&beatEl.value)||4;
   // Restore saved pattern if exists
   if(b.pattern){
     drumPattern=b.pattern.map(row=>[...row]);
     drumBars=b.bars||1;
   } else {
-    drumPattern=DRUM_INSTS.map(()=>Array(STEPS_PER_BAR*4).fill(false));
+    drumPattern=DRUM_INSTS.map(()=>Array(stepsPerBar()*4).fill(false));
     drumBars=1;
   }
-  drumTotalSteps=drumBars*STEPS_PER_BAR;
+  drumTotalSteps=drumBars*stepsPerBar();
   const bpm=parseInt(document.getElementById('ed-bpm').value)||100;
   document.getElementById('drum-bpm').value=bpm;
   document.getElementById('drum-hd-title').textContent=`Bloco ${blockIdx+1} — Ritmo`;
+  document.getElementById('drum-beat-info').textContent=compassoLabel(drumBeatsPerBar);
   show('screen-drum');
   renderDrumGrid();
   updateDrumBarBtns();
@@ -49,7 +56,7 @@ function openDrum(blockIdx){
 function closeDrum(){stopDrumPlay();show('screen-editor');}
 
 function setDrumBars(n){
-  drumBars=n;drumTotalSteps=n*STEPS_PER_BAR;
+  drumBars=n;drumTotalSteps=n*stepsPerBar();
   updateDrumBarBtns();renderDrumGrid();
 }
 function updateDrumBarBtns(){
@@ -63,7 +70,7 @@ function renderDrumGrid(){
   const grid=document.getElementById('drum-grid');
   grid.innerHTML=DRUM_INSTS.map((inst,row)=>{
     const groups=[];
-    for(let beat=0;beat<drumBars*4;beat++){
+    for(let beat=0;beat<drumBars*drumBeatsPerBar;beat++){
       const cells=[];
       for(let sub=0;sub<4;sub++){
         const step=beat*4+sub;
@@ -101,7 +108,7 @@ function toggleStep(row,step){
   cell.style.background=next?DRUM_INSTS[row].bg+(next===2?'55':''):'';
 }
 
-function clearDrum(){drumPattern=DRUM_INSTS.map(()=>Array(STEPS_PER_BAR*4).fill(0));renderDrumGrid();}
+function clearDrum(){drumPattern=DRUM_INSTS.map(()=>Array(stepsPerBar()*4).fill(0));renderDrumGrid();}
 
 // ── Playback Scheduler ─────────────────────────────────
 function toggleDrumPlay(){drumPlaying?stopDrumPlay():startDrumPlay();}
