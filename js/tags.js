@@ -89,18 +89,33 @@ function setTagsTab(tab){
 function addTagsScreenItem(){tagsTab==='tags'?addTagRow():addPaletteColor();}
 function resetTagsScreenItem(){tagsTab==='tags'?resetTagsRow():(confirm('Restaurar as cores predefinidas para o padrão?')&&resetPaletteDefault());}
 
+let colorPickerOpenFor=null;
+function toggleColorPicker(k,ev){
+  if(ev)ev.stopPropagation();
+  colorPickerOpenFor=colorPickerOpenFor===k?null:k;
+  renderTagsScreen();
+}
+document.addEventListener('click',(ev)=>{
+  if(colorPickerOpenFor&&!ev.target.closest('.tag-color-wrap')){
+    colorPickerOpenFor=null;
+    renderTagsScreen();
+  }
+});
 function tagColorSwatches(t){
   return getPalette().map(hex=>`
     <button type="button" class="tag-swatch${t.bg.toLowerCase()===hex.toLowerCase()?' sel':''}"
       style="background:${hex}" title="${hex}"
-      onclick="updateTag('${t.k}',{bg:'${hex}',tx:'${contrastText(hex)}'});renderTagsScreen()"></button>`).join('');
+      onclick="updateTag('${t.k}',{bg:'${hex}',tx:'${contrastText(hex)}'});colorPickerOpenFor=null;renderTagsScreen()"></button>`).join('');
 }
 function renderTagsScreen(){
   const el=document.getElementById('tags-list');
   const list=getTags();
   el.innerHTML=list.map(t=>`
     <div class="tag-row" data-k="${t.k}">
-      <div class="tag-color-picker">${tagColorSwatches(t)}</div>
+      <div class="tag-color-wrap">
+        <button type="button" class="tag-dot" style="background:${t.bg}" title="Escolher cor" onclick="toggleColorPicker('${t.k}',event)"></button>
+        ${colorPickerOpenFor===t.k?`<div class="tag-color-popover">${tagColorSwatches(t)}</div>`:''}
+      </div>
       <input class="tag-label-in" type="text" value="${esc(t.label)}" placeholder="Nome da tag" oninput="updateTag('${t.k}',{label:this.value})">
       <input class="tag-keyword-in" type="text" value="${esc(t.keyword)}" placeholder="palavra-chave" oninput="updateTag('${t.k}',{keyword:this.value})">
       <button class="tag-del-btn" onclick="removeTagRow('${t.k}')">✕</button>

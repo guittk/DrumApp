@@ -208,7 +208,9 @@ textarea,input{font-family:inherit}
 .scroll-mode-row{display:flex;align-items:center;gap:6px;margin-bottom:9px}
 .scroll-mode-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-right:2px}
 .pill-btn.small{padding:5px 12px;font-size:11px}
-.scroll-bpm-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+.scroll-bpm-wrap{display:flex;flex-direction:row;align-items:flex-start;gap:8px;flex-shrink:0}
+.scroll-cfg-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.dur-in.small{width:52px;font-size:13px;padding:5px 4px}
 .pb-row{display:flex;align-items:center;gap:12px}
 .pb-stop{
   width:42px;height:42px;border-radius:50%;font-size:15px;
@@ -434,7 +436,14 @@ textarea,input{font-family:inherit}
   border:1px solid var(--border);border-radius:10px;padding:8px 10px
 }
 .tag-color-in{width:34px;height:34px;border:none;border-radius:8px;background:none;flex-shrink:0;cursor:pointer;padding:0}
-.tag-color-picker{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}
+.tag-color-wrap{position:relative;flex-shrink:0}
+.tag-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;display:block}
+.tag-color-popover{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:20;
+  display:flex;flex-wrap:wrap;gap:6px;width:150px;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:8px;box-shadow:0 6px 18px rgba(0,0,0,.25)
+}
 .tag-swatch{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0}
 .tag-swatch.sel{border-color:var(--text);box-shadow:0 0 0 1px var(--card)}
 .palette-hex{flex:1 1 100px;font-family:'Courier New',monospace;font-size:13px;color:var(--muted)}

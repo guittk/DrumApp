@@ -6,7 +6,8 @@ function renderSong(){
   applyFs();
   document.getElementById('hd-title').textContent=cur.name;
   syncFavBtn();
-  document.getElementById('dur-in').value=cur.duration||'3:30';
+  manualDurVal=cur.duration||'3:30';
+  document.getElementById('dur-in').value=manualDurVal;
 
   // Legend
   const seen=new Map();
@@ -22,6 +23,8 @@ function renderSong(){
   // Scroll speed: two modes — manual (Tempo) or auto from BPM (BPM)
   scrollMode=cur.bpm?'bpm':'time';
   document.getElementById('scroll-bpm-in').value=cur.bpm||100;
+  document.getElementById('scroll-bars-in').value=computeTotalBars();
+  document.getElementById('scroll-beat-in').value='4';
   syncScrollModeUI();
 
   // Build sheet HTML
@@ -93,7 +96,19 @@ function adjFs(d){fs=Math.max(10,Math.min(34,fs+d));applyFs();saveAll();}
 // ════════════════════════════════════════════════════════
 //  SCROLL SPEED MODE — "Tempo" (duração manual) ou "BPM" (auto)
 // ════════════════════════════════════════════════════════
-function setScrollMode(mode){scrollMode=mode;syncScrollModeUI();}
+let manualDurVal='3:30'; // duração digitada no modo Tempo — independente da duração calculada no modo BPM
+function setScrollMode(mode){
+  if(scrollMode==='time'){
+    manualDurVal=document.getElementById('dur-in').value||manualDurVal;
+  }
+  scrollMode=mode;
+  syncScrollModeUI();
+}
+function onDurInInput(v){manualDurVal=v;}
+function onDurInChange(v){
+  if(!cur||scrollMode!=='time')return;
+  cur.duration=v;saveAll();fbSaveSong(cur);
+}
 function syncScrollModeUI(){
   document.getElementById('mode-time-btn').classList.toggle('active',scrollMode==='time');
   document.getElementById('mode-bpm-btn').classList.toggle('active',scrollMode==='bpm');
@@ -109,12 +124,18 @@ function syncScrollModeUI(){
     bpmWrap.classList.add('hidden');
     durIn.readOnly=false;durIn.classList.remove('auto');
     if(durLbl)durLbl.textContent='Duração';
+    durIn.value=manualDurVal;
   }
+}
+function computeTotalBars(){
+  if(!cur) return 16;
+  return cur.items.filter(x=>x.type==='ann').reduce((a,x)=>a+(x.bars||1),0)||16;
 }
 function updateAutoDuration(){
   if(!cur) return;
   const bpm=parseInt(document.getElementById('scroll-bpm-in').value)||100;
-  const totalBars=cur.items.filter(x=>x.type==='ann').reduce((a,x)=>a+(x.bars||1),0)||16;
-  const sec=Math.round((totalBars*4*60)/bpm);
+  const bars=parseInt(document.getElementById('scroll-bars-in').value)||computeTotalBars();
+  const beat=parseInt(document.getElementById('scroll-beat-in').value)||4;
+  const sec=Math.round((bars*beat*60)/bpm);
   document.getElementById('dur-in').value=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
 }

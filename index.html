@@ -71,12 +71,27 @@
       <button class="pb-stop" onclick="stopPlay()">⏮</button>
       <button class="pb-play" id="play-btn" onclick="togglePlay()">▶</button>
       <div class="dur-grp">
-        <input class="dur-in" id="dur-in" type="text" value="3:30">
+        <input class="dur-in" id="dur-in" type="text" value="3:30" oninput="onDurInInput(this.value)" onchange="onDurInChange(this.value)">
         <span class="dur-lbl" id="dur-lbl">Duração</span>
       </div>
       <div class="scroll-bpm-wrap hidden" id="scroll-bpm-wrap">
-        <input class="dur-in" id="scroll-bpm-in" type="number" min="40" max="250" value="100" oninput="updateAutoDuration()">
-        <span class="dur-lbl">BPM Scroll</span>
+        <div class="scroll-cfg-item">
+          <input class="dur-in small" id="scroll-bpm-in" type="number" min="40" max="250" value="100" oninput="updateAutoDuration()">
+          <span class="dur-lbl">BPM</span>
+        </div>
+        <div class="scroll-cfg-item">
+          <input class="dur-in small" id="scroll-bars-in" type="number" min="1" max="500" value="16" oninput="updateAutoDuration()">
+          <span class="dur-lbl">Compassos</span>
+        </div>
+        <div class="scroll-cfg-item">
+          <select class="dur-in small" id="scroll-beat-in" onchange="updateAutoDuration()">
+            <option value="2">2/4</option>
+            <option value="3">3/4</option>
+            <option value="4" selected>4/4</option>
+            <option value="6">6/8</option>
+          </select>
+          <span class="dur-lbl">Compasso</span>
+        </div>
       </div>
       <div class="prog-grp">
         <div class="prog-bar" onclick="seekClick(event)">
