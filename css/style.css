@@ -197,6 +197,14 @@ textarea,input{font-family:inherit}
 .sheet-lyric-line:not(:last-child){border-bottom:1px solid rgba(255,255,255,.04)}
 .sheet-lyric-line strong{font-weight:700;color:#fff}
 
+/* "Now playing" line, driven by BPM/compasso/compassos during playback */
+.sheet-lyric-line.now-playing,.sheet-section-hd.now-playing{
+  position:relative;
+  background:linear-gradient(90deg,color-mix(in srgb, var(--sec-color,#7C5CFC) 30%, transparent),transparent);
+  box-shadow:inset 3px 0 0 var(--sec-color,#7C5CFC)
+}
+.sheet-lyric-line.now-playing{color:#fff}
+
 /* ── PLAYBAR ─────────────────────────────────────────── */
 .playbar{
   background:linear-gradient(180deg,var(--surface),#0b0b16);
@@ -225,6 +233,12 @@ textarea,input{font-family:inherit}
   box-shadow:0 4px 20px -4px rgba(124,92,252,.6)
 }
 .pb-play:hover{transform:scale(1.05)}
+.pb-play.beating{animation:pb-beat linear infinite}
+@keyframes pb-beat{
+  0%{transform:scale(1);box-shadow:0 4px 20px -4px rgba(124,92,252,.6)}
+  15%{transform:scale(1.14);box-shadow:0 4px 28px -2px rgba(124,92,252,.9)}
+  100%{transform:scale(1);box-shadow:0 4px 20px -4px rgba(124,92,252,.6)}
+}
 .dur-grp{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
 .dur-in{
   background:var(--card);border:1px solid var(--border);
@@ -282,7 +296,18 @@ textarea,input{font-family:inherit}
 }
 .ed-bpm-in:focus{border-color:var(--accent)}
 .ed-bpm-lbl{font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}
-#ed-blocks{padding:10px 14px;display:flex;flex-direction:column;gap:12px}
+#ed-blocks{padding:10px 14px;display:flex;flex-direction:column}
+.ed-block-gap{
+  display:flex;align-items:center;justify-content:center;
+  height:14px;flex-shrink:0
+}
+.ed-gap-add-btn{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  background:var(--accent);color:#fff;font-size:13px;font-weight:700;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(.6);transition:opacity .15s,transform .15s;cursor:pointer
+}
+.ed-block-gap:hover .ed-gap-add-btn{opacity:1;transform:scale(1)}
 .ed-block{
   background:var(--card);border:1px solid var(--border);
   border-radius:12px;overflow:hidden
@@ -334,17 +359,19 @@ textarea,input{font-family:inherit}
 .ed-lyrics-ta{
   width:100%;background:transparent;border:none;
   padding:10px 12px;color:var(--text);font-size:15px;
-  line-height:1.7;resize:none;outline:none;min-height:80px;
+  line-height:1.7;resize:none;outline:none;
   overflow:hidden;
 }
 .ed-lyrics-ta::placeholder{color:var(--muted)}
-.ed-add-wrap{padding:12px 14px 20px;flex-shrink:0}
+.ed-add-wrap{padding:12px 14px 20px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
 .ed-add-btn{
   width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:700;
   background:var(--card);border:2px dashed var(--border);color:var(--muted);
   transition:all .15s
 }
 .ed-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.ed-bulk-bars{display:flex;align-items:center;gap:8px;justify-content:center}
+.ed-bulk-bars .ed-act-btn{width:auto;padding:0 12px;height:32px}
 
 /* ── DRUM SEQUENCER ──────────────────────────────────── */
 #screen-drum{
@@ -401,8 +428,21 @@ textarea,input{font-family:inherit}
 }
 .drum-cell:hover{border-color:var(--muted)}
 .drum-cell.on{border-color:transparent}
+.drum-cell.ghost{border:1px dashed rgba(255,255,255,.5)}
+.drum-cell.ghost::after{
+  content:'';position:absolute;inset:9px;border-radius:2px;
+  background:rgba(255,255,255,.55)
+}
 .drum-cell.playing-highlight{outline:2px solid #fff;outline-offset:1px}
 .drum-beat-sep{width:3px;flex-shrink:0}
+.drum-legend-hint{
+  display:flex;align-items:center;gap:4px;padding:0 14px 8px;
+  font-size:11px;color:var(--muted)
+}
+.ghost-dot{
+  display:inline-block;width:9px;height:9px;border-radius:2px;
+  border:1px dashed rgba(255,255,255,.5);background:rgba(255,255,255,.25)
+}
 .drum-foot{
   padding:10px 14px;
   padding-bottom:max(10px,env(safe-area-inset-bottom));

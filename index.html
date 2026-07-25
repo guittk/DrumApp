@@ -123,11 +123,24 @@
       <input class="ed-bpm-in" id="ed-duration" type="text" placeholder="3:30">
       <span class="ed-bpm-lbl">Duração</span>
     </div>
+    <div class="ed-bpm-wrap">
+      <select class="ed-bpm-in" id="ed-beat">
+        <option value="2">2/4</option>
+        <option value="3">3/4</option>
+        <option value="4" selected>4/4</option>
+        <option value="6">6/8</option>
+      </select>
+      <span class="ed-bpm-lbl">Compasso</span>
+    </div>
     <button class="ed-act-btn" title="Buscar BPM/Duração" onclick="openBpmSearchModal('ed-name','ed-bpm','ed-duration')">🔎</button>
   </div>
   <div id="ed-blocks"></div>
   <div class="ed-add-wrap">
     <button class="ed-add-btn" onclick="addEditorBlock()">＋ Adicionar Bloco</button>
+    <div class="ed-bulk-bars">
+      <input class="ed-bars-in" id="ed-bulk-bars-in" type="number" min="1" max="32" value="1">
+      <button class="ed-act-btn" onclick="addBarsToAllBlocks()" title="Soma compassos em todos os blocos">+ Compassos em todos</button>
+    </div>
   </div>
 </div>
 
@@ -148,6 +161,7 @@
     <button class="drum-bar-btn" onclick="setDrumBars(4)" id="dbar-4">4</button>
     <button class="drum-play-btn" id="drum-play-btn" onclick="toggleDrumPlay()">▶ Preview</button>
   </div>
+  <div class="drum-legend-hint">Toque: vazio → nota → vazio  ·  Caixa: vazio → nota → <span class="ghost-dot"></span> ghost note (mais suave) → vazio</div>
   <div class="drum-grid-wrap">
     <div class="drum-grid" id="drum-grid"></div>
   </div>

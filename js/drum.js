@@ -1,22 +1,25 @@
 // ════════════════════════════════════════════════════════
 //  DRUM SEQUENCER
 // ════════════════════════════════════════════════════════
+const GHOST_VEL=0.35; // volume relativo de uma ghost note
 const DRUM_INSTS=[
   {key:'hihat_c',label:'HH Fech',bg:'#22C55E',
-   play:(ctx,t)=>synthHihat(ctx,t,false)},
+   play:(ctx,t,vel=1)=>synthHihat(ctx,t,false,vel)},
   {key:'hihat_o',label:'HH Aber',bg:'#86EFAC',
-   play:(ctx,t)=>synthHihat(ctx,t,true)},
+   play:(ctx,t,vel=1)=>synthHihat(ctx,t,true,vel)},
   {key:'bumbo',  label:'Bumbo',  bg:'#F97316',
-   play:(ctx,t)=>synthKick(ctx,t)},
+   play:(ctx,t,vel=1)=>synthKick(ctx,t,vel)},
   {key:'caixa',  label:'Caixa',  bg:'#3B82F6',
-   play:(ctx,t)=>synthSnare(ctx,t)},
+   play:(ctx,t,vel=1)=>synthSnare(ctx,t,vel)},
   {key:'tom',    label:'Tom',    bg:'#FBBF24',
-   play:(ctx,t)=>synthTom(ctx,t)},
+   play:(ctx,t,vel=1)=>synthTom(ctx,t,vel)},
   {key:'surdo',  label:'Surdo',  bg:'#A855F7',
-   play:(ctx,t)=>synthSurdo(ctx,t)},
+   play:(ctx,t,vel=1)=>synthSurdo(ctx,t,vel)},
   {key:'ride',   label:'Ride',   bg:'#EF4444',
-   play:(ctx,t)=>synthRide(ctx,t)}
+   play:(ctx,t,vel=1)=>synthRide(ctx,t,vel)}
 ];
+// Estado de uma célula do sequenciador: 0=vazia, 1=nota normal, 2=ghost note (mais fraca)
+function cellState(v){return v===2?2:(v?1:0);}
 const STEPS_PER_BAR=16;
 let drumBars=1, drumTotalSteps=16;
 let drumPattern=DRUM_INSTS.map(()=>Array(32).fill(false));
@@ -65,10 +68,12 @@ function renderDrumGrid(){
       for(let sub=0;sub<4;sub++){
         const step=beat*4+sub;
         if(step>=drumTotalSteps) continue;
-        const on=drumPattern[row][step];
-        cells.push(`<div class="drum-cell${on?' on':''}" id="dc-${row}-${step}"
-          style="${on?'background:'+inst.bg+';':''}"
+        const state=cellState(drumPattern[row][step]);
+        const canGhost=inst.key==='caixa';
+        cells.push(`<div class="drum-cell${state===1?' on':''}${state===2?' ghost':''}" id="dc-${row}-${step}"
+          style="${state?'background:'+inst.bg+(state===2?'55':'')+';':''}"
           data-row="${row}" data-step="${step}"
+          title="${canGhost?'Toque: normal → ghost note → vazio':'Toque para ligar/desligar'}"
           ontouchstart="dcTouch(event)" onclick="dcClick(event)"></div>`);
       }
       groups.push(`<div class="drum-beat-group">${cells.join('')}</div>`);
@@ -83,16 +88,20 @@ function renderDrumGrid(){
 function dcClick(e){toggleStep(+e.currentTarget.dataset.row,+e.currentTarget.dataset.step);}
 function dcTouch(e){e.preventDefault();toggleStep(+e.currentTarget.dataset.row,+e.currentTarget.dataset.step);}
 
+// Ciclo por toque: vazia → nota normal → (ghost note, só na caixa) → vazia
 function toggleStep(row,step){
-  drumPattern[row][step]=!drumPattern[row][step];
+  const canGhost=DRUM_INSTS[row].key==='caixa';
+  const state=cellState(drumPattern[row][step]);
+  const next=canGhost?(state===0?1:(state===1?2:0)):(state?0:1);
+  drumPattern[row][step]=next;
   const cell=document.getElementById(`dc-${row}-${step}`);
   if(!cell) return;
-  const on=drumPattern[row][step];
-  cell.classList.toggle('on',on);
-  cell.style.background=on?DRUM_INSTS[row].bg:'';
+  cell.classList.toggle('on',next===1);
+  cell.classList.toggle('ghost',next===2);
+  cell.style.background=next?DRUM_INSTS[row].bg+(next===2?'55':''):'';
 }
 
-function clearDrum(){drumPattern=DRUM_INSTS.map(()=>Array(STEPS_PER_BAR*4).fill(false));renderDrumGrid();}
+function clearDrum(){drumPattern=DRUM_INSTS.map(()=>Array(STEPS_PER_BAR*4).fill(0));renderDrumGrid();}
 
 // ── Playback Scheduler ─────────────────────────────────
 function toggleDrumPlay(){drumPlaying?stopDrumPlay():startDrumPlay();}
@@ -119,7 +128,8 @@ function scheduleDrum(){
   while(drumNextTime<ctx.currentTime+LOOK){
     const step=drumStep%drumTotalSteps;
     DRUM_INSTS.forEach((inst,row)=>{
-      if(drumPattern[row][step]) inst.play(ctx,drumNextTime);
+      const state=cellState(drumPattern[row][step]);
+      if(state) inst.play(ctx,drumNextTime,state===2?GHOST_VEL:1);
     });
     const t=drumNextTime,s=step;
     const delay=(t-ctx.currentTime)*1000;
@@ -174,8 +184,14 @@ function patternToNotation(){
     for(let sub=0;sub<4;sub++){
       const step=beat*4+sub;
       const hit={};
-      DRUM_INSTS.forEach((inst,row)=>{hit[inst.key]=drumPattern[row][step];});
-      const syl=stepSyllables(hit);
+      let anyOn=false,allGhost=true;
+      DRUM_INSTS.forEach((inst,row)=>{
+        const state=cellState(drumPattern[row][step]);
+        hit[inst.key]=state>0;
+        if(state){anyOn=true;if(state!==2)allGhost=false;}
+      });
+      let syl=stepSyllables(hit);
+      if(syl&&anyOn&&allGhost) syl='('+syl.toLowerCase()+')'; // ghost note: entre parênteses e minúsculo
       beatStr+=(syl||'.')+'.';
     }
     parts.push(beatStr.replace(/\.+$/,''));

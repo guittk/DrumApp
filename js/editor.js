@@ -8,17 +8,20 @@ function blockInsts(b){return Array.isArray(b.insts)?b.insts:[b.inst||'hihat'];}
 
 function openEditor(song){
   edEditingSong=song||null;
+  const beatIn=document.getElementById('ed-beat');
   if(song&&song.edBlocks){
     edBlocks=JSON.parse(JSON.stringify(song.edBlocks));
     document.getElementById('ed-name').value=song.name;
     document.getElementById('ed-bpm').value=song.bpm||100;
     const durIn=document.getElementById('ed-duration');if(durIn)durIn.value=song.duration||'';
+    if(beatIn)beatIn.value=song.beat||4;
     document.getElementById('ed-hd-title').textContent='Editar Música';
   } else {
     edBlocks=[{insts:['hihat'],rhythm:'',lyrics:'',pattern:null,bars:1}];
     document.getElementById('ed-name').value='';
     document.getElementById('ed-bpm').value='100';
     const durIn=document.getElementById('ed-duration');if(durIn)durIn.value='';
+    if(beatIn)beatIn.value='4';
     document.getElementById('ed-hd-title').textContent='Nova Música';
   }
   show('screen-editor');
@@ -58,15 +61,30 @@ function editCurrentSong(){
 function renderEditorBlocks(){
   const el=document.getElementById('ed-blocks');
   const tags=getTags();
-  el.innerHTML=edBlocks.map((b,i)=>{
-    const insts=blockInsts(b);
-    const instButtons=tags.map(opt=>`
-      <button class="ed-inst-btn${insts.includes(opt.k)?' sel':''}"
-        style="background:${opt.bg};color:${opt.tx}"
-        onclick="toggleBlockInst(${i},'${opt.k}')">${esc(opt.label)}</button>`).join('');
-    const selCols=insts.map(k=>tags.find(o=>o.k===k)).filter(Boolean);
-    const borderColor=selCols[0]?selCols[0].bg:'#7C5CFC';
-    return `<div class="ed-block" id="edblock-${i}">
+  let html=gapHtml(0);
+  edBlocks.forEach((b,i)=>{
+    html+=blockHtml(b,i,tags);
+    html+=gapHtml(i+1);
+  });
+  el.innerHTML=html;
+  el.querySelectorAll('.ed-lyrics-ta').forEach(autoGrowTextarea);
+}
+
+function gapHtml(insertIdx){
+  return `<div class="ed-block-gap">
+    <button class="ed-gap-add-btn" onclick="insertBlockAt(${insertIdx})" title="Inserir bloco aqui">＋</button>
+  </div>`;
+}
+
+function blockHtml(b,i,tags){
+  const insts=blockInsts(b);
+  const instButtons=tags.map(opt=>`
+    <button class="ed-inst-btn${insts.includes(opt.k)?' sel':''}"
+      style="background:${opt.bg};color:${opt.tx}"
+      onclick="toggleBlockInst(${i},'${opt.k}')">${esc(opt.label)}</button>`).join('');
+  const selCols=insts.map(k=>tags.find(o=>o.k===k)).filter(Boolean);
+  const borderColor=selCols[0]?selCols[0].bg:'#7C5CFC';
+  return `<div class="ed-block" id="edblock-${i}">
       <div class="ed-block-hd" style="border-left:3px solid ${borderColor}">
         <span class="ed-block-num">${i+1}</span>
         <div class="ed-inst-select">${instButtons}</div>
@@ -78,6 +96,7 @@ function renderEditorBlocks(){
         <div class="ed-block-actions">
           <button class="ed-act-btn ed-drum-btn${b.pattern?' has-pattern':''}"
             onclick="openDrum(${i})">🎹 Ritmo</button>
+          <button class="ed-act-btn" onclick="duplicateBlock(${i})" title="Duplicar bloco">⧉</button>
           <button class="ed-act-btn" onclick="moveBlock(${i},-1)" ${i===0?'disabled':''}>↑</button>
           <button class="ed-act-btn" onclick="moveBlock(${i},1)" ${i===edBlocks.length-1?'disabled':''}>↓</button>
           <button class="ed-act-btn" onclick="removeBlock(${i})">✕</button>
@@ -89,11 +108,14 @@ function renderEditorBlocks(){
         oninput="edBlocks[${i}].rhythm=this.value">
       <textarea class="ed-lyrics-ta" id="ed-lyrics-${i}"
         placeholder="Letras (uma linha por vez)…"
-        rows="4"
+        rows="1"
         oninput="edBlocks[${i}].lyrics=this.value;autoGrowTextarea(this)">${esc(b.lyrics||'')}</textarea>
     </div>`;
-  }).join('');
-  el.querySelectorAll('.ed-lyrics-ta').forEach(autoGrowTextarea);
+}
+
+function insertBlockAt(idx){
+  edBlocks.splice(idx,0,{insts:['hihat'],rhythm:'',lyrics:'',pattern:null,bars:1});
+  renderEditorBlocks();
 }
 
 function autoGrowTextarea(el){
@@ -111,8 +133,18 @@ function toggleBlockInst(idx,k){
   renderEditorBlocks();
 }
 function addEditorBlock(){edBlocks.push({insts:['hihat'],rhythm:'',lyrics:'',pattern:null,bars:1});renderEditorBlocks();setTimeout(()=>{document.getElementById('screen-editor').scrollTop=999999;},50);}
+function addBarsToAllBlocks(){
+  const n=parseInt(document.getElementById('ed-bulk-bars-in').value)||1;
+  edBlocks.forEach(b=>{b.bars=(b.bars||1)+n;});
+  renderEditorBlocks();
+}
 function removeBlock(idx){if(edBlocks.length<=1)return;edBlocks.splice(idx,1);renderEditorBlocks();}
 function moveBlock(idx,dir){const ni=idx+dir;if(ni<0||ni>=edBlocks.length)return;[edBlocks[idx],edBlocks[ni]]=[edBlocks[ni],edBlocks[idx]];renderEditorBlocks();}
+function duplicateBlock(idx){
+  const copy=JSON.parse(JSON.stringify(edBlocks[idx]));
+  edBlocks.splice(idx+1,0,copy);
+  renderEditorBlocks();
+}
 
 function saveEditorSong(){
   const name=document.getElementById('ed-name').value.trim();
@@ -120,6 +152,8 @@ function saveEditorSong(){
   const bpm=parseInt(document.getElementById('ed-bpm').value)||null;
   const durEl=document.getElementById('ed-duration');
   const duration=durEl&&durEl.value.trim()?durEl.value.trim():null;
+  const beatEl=document.getElementById('ed-beat');
+  const beat=parseInt(beatEl&&beatEl.value)||4;
   const tags=getTags();
   const oldName=edEditingSong?edEditingSong.name:null;
 
@@ -143,7 +177,7 @@ function saveEditorSong(){
   const dom=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'#7C5CFC';
   const sections=items.filter(x=>x.type==='ann').length;
 
-  const song={name,bpm,duration,items,dom,sections,
+  const song={name,bpm,duration,beat,items,dom,sections,
     edBlocks:JSON.parse(JSON.stringify(edBlocks))};
 
   if(edEditingSong){

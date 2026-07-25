@@ -24,7 +24,7 @@ function renderSong(){
   scrollMode=cur.bpm?'bpm':'time';
   document.getElementById('scroll-bpm-in').value=cur.bpm||100;
   document.getElementById('scroll-bars-in').value=computeTotalBars();
-  document.getElementById('scroll-beat-in').value='4';
+  document.getElementById('scroll-beat-in').value=cur.beat||4;
   syncScrollModeUI();
 
   // Build sheet HTML
@@ -54,28 +54,50 @@ function renderSong(){
     else if(item.type==='lyric'){ if(!sec){sec={ann:null,lyrics:[]};sections.push(sec);} sec.lyrics.push(item); }
   });
 
-  // Sections with no lyrics inside join the block above (regardless of color)
+  // Sections with no lyrics inside join the block above, UNLESS their tag is the
+  // same as the section right above them — same-tag headers stay as their own card
+  // instead of stacking silently into the previous one.
+  // A header with no lyrics under it has nothing to box off, so it skips the
+  // (empty) body div and drops its border — it reads as a plain trailing label.
   const blocks=[];
+  let lastTagKey=null;
+  // Timeline: how long each section lasts (bars × compasso ÷ BPM) drives which
+  // line gets the "now playing" highlight during playback. No BPM, no timeline.
+  let tSec=0;
+  const beatPerBar=cur.beat||4;
   sections.forEach(s=>{
-    let headHtml='',color='#7C5CFC';
+    let headHtml='',color='#7C5CFC',tagKey=null;
+    const noLyrics=s.lyrics.length===0;
+    const secDur=cur.bpm?((s.ann?.bars||1)*beatPerBar*60/cur.bpm):null;
     if(s.ann){
       const cols=getAllCols(s.ann.text);
       color=cols[0]?cols[0].bg:s.ann.bg;
+      tagKey=cols[0]?cols[0].k:null;
       const {type,rest}=parseAnn(s.ann.text);
-      headHtml=`<div class="sheet-section-hd" style="background:${color}22;border-color:${color}66">
+      const borderStyle=noLyrics?'':`;border-color:${color}66`;
+      const headTimeAttr=(noLyrics&&secDur!==null)?` data-t0="${tSec.toFixed(3)}" data-t1="${(tSec+secDur).toFixed(3)}"`:'';
+      headHtml=`<div class="sheet-section-hd"${headTimeAttr} style="background:${color}22${borderStyle}">
         <span class="sec-type" style="color:${color}">${boldify(type)}</span>
         ${rest?`<span class="sec-rhythm">${boldify(rest)}</span>`:''}
       </div>`;
     }
-    const lyricsHtml=s.lyrics.map(l=>`<div class="sheet-lyric-line">${boldify(l.text)}</div>`).join('');
-    const bodyHtml=`<div class="sheet-section-body">${lyricsHtml}</div>`;
+    const lineDur=(secDur!==null&&s.lyrics.length)?secDur/s.lyrics.length:null;
+    const lyricsHtml=s.lyrics.map((l,li)=>{
+      const timeAttr=lineDur!==null?` data-t0="${(tSec+li*lineDur).toFixed(3)}" data-t1="${(tSec+(li+1)*lineDur).toFixed(3)}"`:'';
+      return `<div class="sheet-lyric-line"${timeAttr}>${boldify(l.text)}</div>`;
+    }).join('');
+    const bodyHtml=noLyrics?'':`<div class="sheet-section-body">${lyricsHtml}</div>`;
+    if(secDur!==null) tSec+=secDur;
 
-    if(s.lyrics.length===0 && blocks.length){
+    const sameTagAsAbove=tagKey!==null&&tagKey===lastTagKey;
+    if(noLyrics && blocks.length && !sameTagAsAbove){
       blocks[blocks.length-1].html+=headHtml+bodyHtml;
     }else{
       blocks.push({color,html:headHtml+bodyHtml});
     }
+    lastTagKey=tagKey;
   });
+  songTimelineSec=tSec;
   blocks.forEach(b=>{
     html+=`<div class="sheet-section" style="--sec-color:${b.color}">${b.html}</div>`;
   });
@@ -84,6 +106,7 @@ function renderSong(){
   body.innerHTML=html;
   body.scrollTop=0;
   resetProg();
+  clearNowPlaying();
 }
 
 function applyFs(){
