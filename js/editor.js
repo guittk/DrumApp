@@ -41,7 +41,7 @@ function songToEdBlocks(song){
       const rhythm=rest.replace(/^\(|\)$/g,'');
       const cols=getAllCols(bracket);
       const insts=cols.filter(c=>c.k!=='default').map(c=>c.k);
-      cur={insts:insts.length?insts:['default'],rhythm,lyrics:'',pattern:null,bars:item.bars||1,_lyrLines:[]};
+      cur={insts:insts.length?insts:['default'],rhythm,lyrics:'',pattern:null,bars:item.bars??1,_lyrLines:[]};
       blocks.push(cur);
     } else if(item.type==='lyric'){
       if(!cur){cur={insts:['default'],rhythm:'',lyrics:'',pattern:null,bars:1,_lyrLines:[]};blocks.push(cur);}
@@ -83,14 +83,14 @@ function blockHtml(b,i,tags){
       style="background:${opt.bg};color:${opt.tx}"
       onclick="toggleBlockInst(${i},'${opt.k}')">${esc(opt.label)}</button>`).join('');
   const selCols=insts.map(k=>tags.find(o=>o.k===k)).filter(Boolean);
-  const borderColor=selCols[0]?selCols[0].bg:'#7C5CFC';
+  const borderColor=selCols[0]?selCols[0].bg:'#7fa37a';
   return `<div class="ed-block" id="edblock-${i}">
       <div class="ed-block-hd" style="border-left:3px solid ${borderColor}">
         <span class="ed-block-num">${i+1}</span>
         <div class="ed-inst-select">${instButtons}</div>
         <div class="ed-bars-wrap">
-          <input class="ed-bars-in" id="ed-bars-${i}" type="number" min="1" max="32"
-            value="${b.bars||1}" oninput="edBlocks[${i}].bars=Math.max(1,parseInt(this.value)||1)">
+          <input class="ed-bars-in" id="ed-bars-${i}" type="number" min="0" max="32"
+            value="${b.bars??1}" oninput="edBlocks[${i}].bars=Math.max(0,parseInt(this.value)||0)">
           <span class="ed-bars-lbl">Compassos</span>
         </div>
         <div class="ed-block-actions">
@@ -135,7 +135,7 @@ function toggleBlockInst(idx,k){
 function addEditorBlock(){edBlocks.push({insts:['hihat'],rhythm:'',lyrics:'',pattern:null,bars:1});renderEditorBlocks();setTimeout(()=>{document.getElementById('screen-editor').scrollTop=999999;},50);}
 function addBarsToAllBlocks(){
   const n=parseInt(document.getElementById('ed-bulk-bars-in').value)||1;
-  edBlocks.forEach(b=>{b.bars=(b.bars||1)+n;});
+  edBlocks.forEach(b=>{b.bars=(b.bars??0)+n;});
   renderEditorBlocks();
 }
 function removeBlock(idx){if(edBlocks.length<=1)return;edBlocks.splice(idx,1);renderEditorBlocks();}
@@ -174,7 +174,7 @@ function saveEditorSong(){
 
   const cnt={};
   items.filter(x=>x.type==='ann').forEach(x=>{cnt[x.bg]=(cnt[x.bg]||0)+1;});
-  const dom=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'#7C5CFC';
+  const dom=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'#7fa37a';
   const sections=items.filter(x=>x.type==='ann').length;
 
   const song={name,bpm,duration,beat,items,dom,sections,

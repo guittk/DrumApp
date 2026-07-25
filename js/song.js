@@ -28,7 +28,7 @@ function renderSong(){
   syncScrollModeUI();
 
   // Build sheet HTML
-  const dom=cur.dom||'#7C5CFC';
+  const dom=cur.dom||'#7fa37a';
   const bpmTxt=cur.bpm?` · ${cur.bpm} BPM`:'';
   let html=`
     <div class="sheet-title">
@@ -66,9 +66,9 @@ function renderSong(){
   let tSec=0;
   const beatPerBar=cur.beat||4;
   sections.forEach(s=>{
-    let headHtml='',color='#7C5CFC',tagKey=null;
+    let headHtml='',color='#7fa37a',tagKey=null;
     const noLyrics=s.lyrics.length===0;
-    const secDur=cur.bpm?((s.ann?.bars||1)*beatPerBar*60/cur.bpm):null;
+    const secDur=cur.bpm?((s.ann?.bars??1)*beatPerBar*60/cur.bpm):null;
     if(s.ann){
       const cols=getAllCols(s.ann.text);
       color=cols[0]?cols[0].bg:s.ann.bg;
@@ -152,7 +152,7 @@ function syncScrollModeUI(){
 }
 function computeTotalBars(){
   if(!cur) return 16;
-  return cur.items.filter(x=>x.type==='ann').reduce((a,x)=>a+(x.bars||1),0)||16;
+  return cur.items.filter(x=>x.type==='ann').reduce((a,x)=>a+(x.bars??1),0)||16;
 }
 function updateAutoDuration(){
   if(!cur) return;
