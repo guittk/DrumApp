@@ -8,7 +8,7 @@ function renderSong(){
   syncFavBtn();
   manualDurVal=cur.duration||'3:30';
   document.getElementById('dur-in').value=manualDurVal;
-  playStartY=0; // nova música: play recomeça do topo até o usuário marcar um bloco
+  playStartY=0;playStartSec=0;curElapsedSec=0; // nova música: play recomeça do topo até o usuário marcar um bloco
 
   // Legend
   const seen=new Map();

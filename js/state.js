@@ -10,3 +10,5 @@ let scrollMode='time'; // 'time' (duração manual) ou 'bpm' (duração automát
 let songTimelineSec=0; // duração total da música calculada por BPM/compasso/compassos (0 = sem BPM, sem highlight)
 let tickEnabled=false; // toca um tick de metrônomo no ritmo do BPM enquanto o play está piscando
 let playStartY=0; // posição de scroll marcada pelo usuário — ⏮ e play voltam pra cá, não pro topo
+let playStartSec=0; // instante (linha do tempo por BPM/compasso/compassos) do bloco marcado
+let curElapsedSec=0; // instante atual nessa linha do tempo — avança com o play, usado pro highlight

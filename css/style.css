@@ -205,10 +205,13 @@ textarea,input{font-family:inherit}
 .sheet-lyric-line:not(:last-child){border-bottom:1px solid rgba(255,255,255,.04)}
 .sheet-lyric-line strong{font-weight:700;color:#fff}
 
-/* "Now playing" line, driven by BPM/compasso/compassos during playback */
+/* "Now playing" line, driven by BPM/compasso/compassos during playback.
+   .sheet-section-hd always carries an inline background (its instrument color),
+   which beats any class selector — !important is required here or a header
+   (the common case for lyric-less rhythm sections) never visibly highlights. */
 .sheet-lyric-line.now-playing,.sheet-section-hd.now-playing{
   position:relative;
-  background:linear-gradient(90deg,color-mix(in srgb, var(--sec-color,var(--accent)) 30%, transparent),transparent);
+  background:linear-gradient(90deg,color-mix(in srgb, var(--sec-color,var(--accent)) 30%, transparent),transparent) !important;
   box-shadow:inset 3px 0 0 var(--sec-color,var(--accent))
 }
 .sheet-lyric-line.now-playing{color:#fff}
