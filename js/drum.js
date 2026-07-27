@@ -2,29 +2,41 @@
 //  DRUM SEQUENCER
 // ════════════════════════════════════════════════════════
 const GHOST_VEL=0.35; // volume relativo de uma ghost note
+// countsForText:false — HH, Ride e Crash tocam no preview mas não entram na
+// conversão do ritmo pra texto (só bumbo/caixa/tom/surdo formam as sílabas).
 const DRUM_INSTS=[
-  {key:'hihat_c',label:'HH Fech',bg:'#22C55E',
+  {key:'hihat_c',label:'HH Fech',bg:'#22C55E',countsForText:false,
    play:(ctx,t,vel=1)=>synthHihat(ctx,t,false,vel)},
-  {key:'hihat_o',label:'HH Aber',bg:'#86EFAC',
+  {key:'hihat_o',label:'HH Aber',bg:'#86EFAC',countsForText:false,
    play:(ctx,t,vel=1)=>synthHihat(ctx,t,true,vel)},
-  {key:'bumbo',  label:'Bumbo',  bg:'#F97316',
+  {key:'ride',   label:'Ride',   bg:'#EF4444',countsForText:false,
+   play:(ctx,t,vel=1)=>synthRide(ctx,t,vel)},
+  {key:'crash',  label:'Crash',  bg:'#DC2626',countsForText:false,
+   play:(ctx,t,vel=1)=>synthCrash(ctx,t,vel)},
+  {key:'bumbo',  label:'Bumbo',  bg:'#F97316',countsForText:true,
    play:(ctx,t,vel=1)=>synthKick(ctx,t,vel)},
-  {key:'caixa',  label:'Caixa',  bg:'#3B82F6',
+  {key:'caixa',  label:'Caixa',  bg:'#3B82F6',countsForText:true,
    play:(ctx,t,vel=1)=>synthSnare(ctx,t,vel)},
-  {key:'tom',    label:'Tom',    bg:'#FBBF24',
+  {key:'tom',    label:'Tom',    bg:'#FBBF24',countsForText:true,
    play:(ctx,t,vel=1)=>synthTom(ctx,t,vel)},
-  {key:'surdo',  label:'Surdo',  bg:'#A855F7',
-   play:(ctx,t,vel=1)=>synthSurdo(ctx,t,vel)},
-  {key:'ride',   label:'Ride',   bg:'#EF4444',
-   play:(ctx,t,vel=1)=>synthRide(ctx,t,vel)}
+  {key:'surdo',  label:'Surdo',  bg:'#A855F7',countsForText:true,
+   play:(ctx,t,vel=1)=>synthSurdo(ctx,t,vel)}
 ];
 // Estado de uma célula do sequenciador: 0=vazia, 1=nota normal, 2=ghost note (mais fraca)
 function cellState(v){return v===2?2:(v?1:0);}
 function compassoLabel(n){return n===6?'6/8':n+'/4';}
-// Batidas por compasso — vem do "Compasso" da música (2/4,3/4,4/4,6/8). Uma célula
-// = uma batida (sem subdivisão), então 6/8 dá 6 drum-cell por compasso, e 4/4 dá 4.
+// Batidas por compasso — vem do "Compasso" da música (2/4,3/4,4/4,6/8).
 let drumBeatsPerBar=4;
-function stepsPerBar(){return drumBeatsPerBar;}
+// Divisão de cada batida: 1=semínima, 2=colcheia, 3=tercina, 4=semicolcheia.
+let drumSubdivision=1;
+function stepsPerBar(){return drumBeatsPerBar*drumSubdivision;}
+// Sílabas de contagem por batida, na ordem em que aparecem dentro dela.
+function subdivisionSyllables(sub){
+  if(sub===2) return ['','+'];
+  if(sub===3) return ['','tri','plê'];
+  if(sub===4) return ['','e','+','a'];
+  return [''];
+}
 let drumBars=1, drumTotalSteps=16;
 let drumPattern=DRUM_INSTS.map(()=>Array(32).fill(false));
 let drumBlockIdx=-1;
@@ -36,6 +48,7 @@ function openDrum(blockIdx){
   const b=edBlocks[blockIdx];
   const beatEl=document.getElementById('ed-beat');
   drumBeatsPerBar=parseInt(beatEl&&beatEl.value)||4;
+  drumSubdivision=b.subdivision||1;
   // Restore saved pattern if exists
   if(b.pattern){
     drumPattern=b.pattern.map(row=>[...row]);
@@ -49,9 +62,15 @@ function openDrum(blockIdx){
   document.getElementById('drum-bpm').value=bpm;
   document.getElementById('drum-hd-title').textContent=`Bloco ${blockIdx+1} — Ritmo`;
   document.getElementById('drum-beat-info').textContent=compassoLabel(drumBeatsPerBar);
+  document.getElementById('drum-subdiv-select').value=drumSubdivision;
   show('screen-drum');
   renderDrumGrid();
   updateDrumBarBtns();
+}
+function setDrumSubdivision(v){
+  drumSubdivision=parseInt(v)||1;
+  drumTotalSteps=drumBars*stepsPerBar();
+  renderDrumGrid();
 }
 function closeDrum(){stopDrumPlay();show('screen-editor');}
 
@@ -66,30 +85,56 @@ function updateDrumBarBtns(){
   document.getElementById('drum-step-info').textContent=`${drumTotalSteps} passos`;
 }
 
+// Constrói, por compasso, um grupo (drum-beat-group) por batida — cada grupo tem
+// `drumSubdivision` células (1 p/ semínima, 2 colcheia, 3 tercina, 4 semicolcheia).
 function renderDrumGrid(){
   const grid=document.getElementById('drum-grid');
   grid.innerHTML=DRUM_INSTS.map((inst,row)=>{
-    const groups=[];
+    const bars=[];
     for(let bar=0;bar<drumBars;bar++){
-      const cells=[];
+      const beatGroups=[];
       for(let beat=0;beat<drumBeatsPerBar;beat++){
-        const step=bar*drumBeatsPerBar+beat;
-        if(step>=drumTotalSteps) continue;
-        const state=cellState(drumPattern[row][step]);
-        const canGhost=inst.key==='caixa';
-        cells.push(`<div class="drum-cell${state===1?' on':''}${state===2?' ghost':''}" id="dc-${row}-${step}"
-          style="${state?'background:'+inst.bg+(state===2?'55':'')+';':''}"
-          data-row="${row}" data-step="${step}"
-          title="${canGhost?'Toque: normal → ghost note → vazio':'Toque para ligar/desligar'}"
-          ontouchstart="dcTouch(event)" onclick="dcClick(event)"></div>`);
+        const cells=[];
+        for(let s=0;s<drumSubdivision;s++){
+          const step=(bar*drumBeatsPerBar+beat)*drumSubdivision+s;
+          if(step>=drumTotalSteps) continue;
+          const state=cellState(drumPattern[row][step]);
+          const canGhost=inst.key==='caixa';
+          cells.push(`<div class="drum-cell${state===1?' on':''}${state===2?' ghost':''}" id="dc-${row}-${step}"
+            style="${state?'background:'+inst.bg+(state===2?'55':'')+';':''}"
+            data-row="${row}" data-step="${step}"
+            title="${canGhost?'Toque: normal → ghost note → vazio':'Toque para ligar/desligar'}"
+            ontouchstart="dcTouch(event)" onclick="dcClick(event)"></div>`);
+        }
+        beatGroups.push(`<div class="drum-beat-group">${cells.join('')}</div>`);
       }
-      groups.push(`<div class="drum-beat-group">${cells.join('')}</div>`);
+      bars.push(beatGroups.join(''));
     }
     return `<div class="drum-row">
       <div class="drum-label" style="color:${inst.bg}">${inst.label}</div>
-      ${groups.join('<div class="drum-beat-sep"></div>')}
+      ${bars.join('<div class="drum-beat-sep"></div>')}
     </div>`;
   }).join('');
+  renderCountRow();
+  updateDrumPreview();
+}
+
+// Régua de contagem (1 e + a, 1 tri plê, etc.) alinhada com as células, pra
+// ajudar a saber em qual subdivisão da batida cada célula está.
+function renderCountRow(){
+  const row=document.getElementById('drum-count-row');
+  if(!row) return;
+  const syl=subdivisionSyllables(drumSubdivision);
+  const bars=[];
+  for(let bar=0;bar<drumBars;bar++){
+    const beatGroups=[];
+    for(let beat=0;beat<drumBeatsPerBar;beat++){
+      const cells=syl.map((s,i)=>`<div class="drum-count-cell">${i===0?(beat+1):s}</div>`).join('');
+      beatGroups.push(`<div class="drum-beat-group">${cells}</div>`);
+    }
+    bars.push(beatGroups.join(''));
+  }
+  row.innerHTML=`<div class="drum-label"></div>${bars.join('<div class="drum-beat-sep"></div>')}`;
 }
 
 function dcClick(e){toggleStep(+e.currentTarget.dataset.row,+e.currentTarget.dataset.step);}
@@ -106,9 +151,18 @@ function toggleStep(row,step){
   cell.classList.toggle('on',next===1);
   cell.classList.toggle('ghost',next===2);
   cell.style.background=next?DRUM_INSTS[row].bg+(next===2?'55':''):'';
+  updateDrumPreview();
 }
 
 function clearDrum(){drumPattern=DRUM_INSTS.map(()=>Array(stepsPerBar()*4).fill(0));renderDrumGrid();}
+
+// Mostra ao vivo como o padrão atual vira texto (mesmo formato salvo no ritmo do bloco).
+function updateDrumPreview(){
+  const el=document.getElementById('drum-preview-text');
+  if(!el) return;
+  const notation=patternToNotation();
+  el.textContent=notation||'—';
+}
 
 // ── Playback Scheduler ─────────────────────────────────
 function toggleDrumPlay(){drumPlaying?stopDrumPlay():startDrumPlay();}
@@ -130,7 +184,7 @@ function stopDrumPlay(){
 function scheduleDrum(){
   if(!drumPlaying) return;
   const ctx=getCtx();
-  const secPerStep=60/parseInt(document.getElementById('drum-bpm').value||100);
+  const secPerStep=(60/parseInt(document.getElementById('drum-bpm').value||100))/drumSubdivision;
   const LOOK=0.12;
   while(drumNextTime<ctx.currentTime+LOOK){
     const step=drumStep%drumTotalSteps;
@@ -153,15 +207,13 @@ function highlightStep(step){
   });
 }
 
-// ── Generate notation from pattern (Tu/Ta/Tra/Bu/Pam) ──
-// hit: objeto {bumbo,caixa,tom,hihat_c,hihat_o,ride,surdo} -> boolean
+// ── Generate notation from pattern (Tu/Ta/Tra/Bu) ──
+// hit: objeto {bumbo,caixa,tom,surdo} -> boolean. HH/Ride/Crash não contam.
 function stepSyllables(hit){
-  const bumbo=hit.bumbo,caixa=hit.caixa,tom=hit.tom,hhC=hit.hihat_c,hhO=hit.hihat_o,ride=hit.ride,surdo=hit.surdo;
+  const bumbo=hit.bumbo,caixa=hit.caixa,tom=hit.tom,surdo=hit.surdo;
   if(caixa&&bumbo){
     let s='Tra';
     if(tom)s+='Tu';
-    if(hhC||hhO)s+='Ta';
-    if(ride)s+='Pam';
     if(surdo)s+='Bu';
     return s;
   }
@@ -169,8 +221,6 @@ function stepSyllables(hit){
     let s='TuBu';
     if(caixa)s+='Ta';
     if(tom)s+='Tu';
-    if(hhC||hhO)s+='Ta';
-    if(ride)s+='Pam';
     return s;
   }
   let s='';
@@ -178,8 +228,6 @@ function stepSyllables(hit){
   if(surdo)s+='Tu';
   if(tom)s+='Tu';
   if(caixa)s+='Ta';
-  if(hhC||hhO)s+='Ta';
-  if(ride)s+='Pam';
   return s;
 }
 function patternToNotation(){
@@ -189,6 +237,7 @@ function patternToNotation(){
     let anyOn=false,allGhost=true;
     DRUM_INSTS.forEach((inst,row)=>{
       const state=cellState(drumPattern[row][step]);
+      if(!inst.countsForText)return;
       hit[inst.key]=state>0;
       if(state){anyOn=true;if(state!==2)allGhost=false;}
     });
@@ -205,6 +254,7 @@ function saveDrumPattern(){
   const b=edBlocks[drumBlockIdx];
   b.pattern=drumPattern.map(row=>[...row]);
   b.bars=drumBars;
+  b.subdivision=drumSubdivision;
   if(notation) b.rhythm=notation;
   // Update rhythm input in editor
   const rin=document.getElementById('ed-rhythm-'+drumBlockIdx);

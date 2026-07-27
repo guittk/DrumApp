@@ -22,6 +22,7 @@ function startPlay(){
   buildTimedEls();
   if(songTimelineSec>0) highlightNowPlaying(ps.startSec);
   if(tickEnabled) startTickScheduler();
+  if(beatSoundEnabled) startBeatScheduler();
   if(rafId)cancelAnimationFrame(rafId);rafId=requestAnimationFrame(rafLoop);
 }
 function pausePlay(){
@@ -29,11 +30,19 @@ function pausePlay(){
   const btn=document.getElementById('play-btn');
   btn.textContent='▶';btn.classList.remove('beating');
   stopTickScheduler();
+  stopBeatScheduler();
 }
 function stopPlay(){
   pausePlay();
   const body=document.getElementById('song-body');if(body)body.scrollTop=playStartY;
-  ps=null;curElapsedSec=playStartSec;resetProg();clearNowPlaying();
+  ps=null;curElapsedSec=playStartSec;resetProg();
+  // Destaque só aparece com um bloco selecionado (marcado) ou tocando — parar
+  // sem marcador nenhum não deve deixar nenhuma linha destacada.
+  if(document.querySelector('.play-start-marker')&&songTimelineSec>0){
+    buildTimedEls();highlightNowPlaying(playStartSec);
+  }else{
+    clearNowPlaying();
+  }
 }
 
 // ── Marcar de onde o play deve começar (ex: ensaiar um bloco específico) ──
@@ -44,13 +53,15 @@ function setPlayStart(el){
   const already=el.classList.contains('play-start-marker');
   document.querySelectorAll('.sheet-section-hd.play-start-marker').forEach(e=>e.classList.remove('play-start-marker'));
   if(already){
-    playStartY=0;playStartSec=0;
-  }else{
-    el.classList.add('play-start-marker');
-    const rect=el.getBoundingClientRect(),bodyRect=body.getBoundingClientRect();
-    playStartY=Math.max(0,body.scrollTop+(rect.top-bodyRect.top));
-    playStartSec=el.dataset.t0?+el.dataset.t0:0;
+    playStartY=0;playStartSec=0;curElapsedSec=0;
+    if(!playing){body.scrollTop=0;clearNowPlaying();}
+    return;
   }
+  el.classList.add('play-start-marker');
+  const rect=el.getBoundingClientRect(),bodyRect=body.getBoundingClientRect();
+  const titleH=document.querySelector('.sheet-title')?.offsetHeight||300;
+  playStartY=Math.max(0,body.scrollTop+(rect.top-bodyRect.top)-titleH);
+  playStartSec=el.dataset.t0?+el.dataset.t0:0;
   curElapsedSec=playStartSec;
   if(!playing){
     body.scrollTop=playStartY;
@@ -87,12 +98,14 @@ function highlightNowPlaying(elapsedSec){
   if(!match&&elapsedSec<hlEls[0].t0) match=hlEls[0];
   const idx=match?timedEls.indexOf(match):-1;
   if(idx===nowPlayingIdx)return;
-  if(nowPlayingIdx>=0&&timedEls[nowPlayingIdx]) timedEls[nowPlayingIdx].el.classList.remove('now-playing');
+  // Limpa QUALQUER linha destacada no DOM (não só a rastreada em nowPlayingIdx)
+  // pra garantir que nunca fique mais de uma linha em destaque ao mesmo tempo.
+  document.querySelectorAll('#song-body .now-playing').forEach(e=>e.classList.remove('now-playing'));
   if(idx>=0) timedEls[idx].el.classList.add('now-playing');
   nowPlayingIdx=idx;
 }
 function clearNowPlaying(){
-  if(nowPlayingIdx>=0&&timedEls&&timedEls[nowPlayingIdx]) timedEls[nowPlayingIdx].el.classList.remove('now-playing');
+  document.querySelectorAll('#song-body .now-playing').forEach(e=>e.classList.remove('now-playing'));
   timedEls=null;nowPlayingIdx=-1;
 }
 // ── Tick de metrônomo, no ritmo do BPM (mesmo intervalo do play-btn piscando) ──
@@ -126,6 +139,45 @@ function scheduleTick(){
   tickTimerId=setTimeout(scheduleTick,25);
 }
 
+// ── Som real da batida (não só o tick) — toca o pattern de bateria salvo do
+//    bloco atual, no ritmo real decorrido, igual o preview da tela de Ritmo. ──
+let beatTimerId=null,beatNextTime=0,beatStep=0,beatSecIdx=-1;
+function toggleBeatSound(){
+  beatSoundEnabled=!beatSoundEnabled;
+  document.getElementById('beat-btn').classList.toggle('active',beatSoundEnabled);
+  if(beatSoundEnabled&&playing) startBeatScheduler();
+  else stopBeatScheduler();
+}
+function startBeatScheduler(){
+  beatSecIdx=-1;beatStep=0;
+  scheduleBeatSound();
+}
+function stopBeatScheduler(){
+  if(beatTimerId){clearTimeout(beatTimerId);beatTimerId=null;}
+}
+function scheduleBeatSound(){
+  if(!playing||!beatSoundEnabled)return;
+  if(songBeatSections&&songBeatSections.length){
+    const ctx=getCtx();
+    const secIdx=songBeatSections.findIndex(s=>curElapsedSec>=s.t0&&curElapsedSec<s.t1);
+    if(secIdx!==-1){
+      const sec=songBeatSections[secIdx];
+      if(secIdx!==beatSecIdx){beatSecIdx=secIdx;beatStep=0;beatNextTime=ctx.currentTime+0.05;}
+      const LOOK=0.15;
+      while(beatNextTime<ctx.currentTime+LOOK){
+        const step=beatStep%sec.totalSteps;
+        sec.pattern.forEach((row,ri)=>{
+          const inst=DRUM_INSTS[ri];if(!inst)return;
+          const state=cellState(row[step]);
+          if(state) inst.play(ctx,beatNextTime,state===2?GHOST_VEL:1);
+        });
+        beatNextTime+=sec.secPerStep;beatStep++;
+      }
+    }
+  }
+  beatTimerId=setTimeout(scheduleBeatSound,25);
+}
+
 function seekClick(e){
   const rect=e.currentTarget.getBoundingClientRect();
   const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
@@ -135,5 +187,4 @@ function seekClick(e){
   updateProg(pct,dur);
   curElapsedSec=songTimelineSec>0?pct*songTimelineSec:0;
   if(playing){pausePlay();startPlay();}
-  else if(songTimelineSec>0){buildTimedEls();highlightNowPlaying(curElapsedSec);}
 }

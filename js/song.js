@@ -9,6 +9,7 @@ function renderSong(){
   manualDurVal=cur.duration||'3:30';
   document.getElementById('dur-in').value=manualDurVal;
   playStartY=0;playStartSec=0;curElapsedSec=0; // nova música: play recomeça do topo até o usuário marcar um bloco
+  songBeatSections=[]; // blocos com pattern de bateria salvo, pra tocar o som real da batida no play
 
   // Legend
   const seen=new Map();
@@ -64,7 +65,7 @@ function renderSong(){
   let lastTagKey=null;
   // Timeline: how long each section lasts (bars × compasso ÷ BPM) drives which
   // line gets the "now playing" highlight during playback. No BPM, no timeline.
-  let tSec=0;
+  let tSec=0,annIdx=0;
   const beatPerBar=cur.beat||4;
   sections.forEach(s=>{
     let headHtml='',color='#7fa37a',tagKey=null;
@@ -76,6 +77,14 @@ function renderSong(){
       tagKey=cols[0]?cols[0].k:null;
       const {type,rest}=parseAnn(s.ann.text);
       const borderStyle=noLyrics?'':`;border-color:${color}66`;
+      // Bloco tem pattern de bateria salvo? Guarda o trecho da linha do tempo
+      // que ele ocupa pra tocar o som real da batida durante o play da música.
+      const eb=cur.edBlocks&&cur.edBlocks[annIdx];
+      if(eb&&eb.pattern&&secDur){
+        const totalSteps=(s.ann.bars??1)*beatPerBar*(eb.subdivision||1);
+        if(totalSteps>0) songBeatSections.push({t0:tSec,t1:tSec+secDur,pattern:eb.pattern,totalSteps,secPerStep:secDur/totalSteps});
+      }
+      annIdx++;
       // Every header gets a data-t0 anchor (for pixel↔tempo interpolation when a
       // marked start point sits on it) but only a lyric-less header is a valid
       // "now playing" highlight target (data-hl) — one with lyrics below just

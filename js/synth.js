@@ -41,7 +41,27 @@ function synthHihat(ctx,t,open,vel=1){
   const g=ctx.createGain();g.gain.setValueAtTime(0.5*vel,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
   src.connect(hp);hp.connect(g);g.connect(ctx.destination);src.start(t);src.stop(t+dur+0.01);
 }
+// Ride tocado com a ponta da baqueta: "ping" definido e curto, pouco chiado.
 function synthRide(ctx,t,vel=1){
+  const dur=0.3;
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='triangle';o.frequency.setValueAtTime(1900,t);
+  g.gain.setValueAtTime(0.28*vel,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+dur+0.01);
+  const o2=ctx.createOscillator(),g2=ctx.createGain();
+  o2.type='sine';o2.frequency.setValueAtTime(3000,t);
+  g2.gain.setValueAtTime(0.14*vel,t);g2.gain.exponentialRampToValueAtTime(0.001,t+dur*0.5);
+  o2.connect(g2);g2.connect(ctx.destination);o2.start(t);o2.stop(t+dur*0.5+0.01);
+  const dur3=dur*0.6;
+  const n=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur3),ctx.sampleRate);
+  const d=n.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const src=ctx.createBufferSource();src.buffer=n;
+  const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=4500;
+  const ng=ctx.createGain();ng.gain.setValueAtTime(0.08*vel,t);ng.gain.exponentialRampToValueAtTime(0.001,t+dur3);
+  src.connect(hp);hp.connect(ng);ng.connect(ctx.destination);src.start(t);src.stop(t+dur3+0.01);
+}
+// Crash: o wash de ruído com decaimento longo que antes era o som do Ride.
+function synthCrash(ctx,t,vel=1){
   const dur=0.6;
   const n=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
   const d=n.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;

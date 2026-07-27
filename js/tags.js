@@ -87,7 +87,10 @@ function setTagsTab(tab){
   document.getElementById('tags-reset-btn').textContent=tab==='tags'?'↺ Restaurar tags padrão':'↺ Restaurar cores padrão';
 }
 function addTagsScreenItem(){tagsTab==='tags'?addTagRow():addPaletteColor();}
-function resetTagsScreenItem(){tagsTab==='tags'?resetTagsRow():(confirm('Restaurar as cores predefinidas para o padrão?')&&resetPaletteDefault());}
+async function resetTagsScreenItem(){
+  if(tagsTab==='tags'){resetTagsRow();return;}
+  if(await showConfirm('Restaurar as cores predefinidas para o padrão?'))resetPaletteDefault();
+}
 
 let colorPickerOpenFor=null;
 function toggleColorPicker(k,ev){
@@ -129,7 +132,7 @@ function addTagRow(){
   addTag({k,label,bg,tx:contrastText(bg),keyword:escRegex(label)});
   renderTagsScreen();
 }
-function resetTagsRow(){if(confirm('Restaurar as tags para o padrão? Isso apaga suas personalizações.')){resetTagsDefault();renderTagsScreen();}}
+async function resetTagsRow(){if(await showConfirm('Restaurar as tags para o padrão? Isso apaga suas personalizações.')){resetTagsDefault();renderTagsScreen();}}
 
 function renderPaletteScreen(){
   const el=document.getElementById('palette-list');

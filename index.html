@@ -11,9 +11,38 @@
 </head>
 <body>
 
+<!-- ══ LOGIN ═══════════════════════════════════════════ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-panel">
+    <div class="login-brand">
+      <div class="login-brand-mark">🥁</div>
+      <div>
+        <div class="login-brand-name">THURGH</div>
+        <div class="login-brand-sub">Sheet de Bateria</div>
+      </div>
+    </div>
+    <p class="login-title">Entrar</p>
+    <p class="login-sub">Acesse com a mesma conta do Life OS para continuar.</p>
+    <div class="login-error" id="auth-error"></div>
+    <div class="login-field">
+      <label>E-mail</label>
+      <input type="email" id="auth-email" autocomplete="email" placeholder="voce@email.com">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="auth-password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="login-submit-btn" id="auth-submit-btn">Entrar</button>
+  </div>
+</div>
+
+<!-- ══ APP ═════════════════════════════════════════════ -->
+<div id="app-shell" class="hidden">
+
 <!-- ══ UPLOAD ════════════════════════════════════════ -->
 <div id="screen-upload">
   <button class="back-btn hidden" id="up-back-btn" onclick="goList()">← Voltar</button>
+  <button class="back-btn up-logout-btn" onclick="doLogout()">🚪 Sair</button>
   <div class="up-wrap">
     <div class="up-logo">THURGH</div>
     <div class="up-sub">Sheet de Bateria</div>
@@ -38,6 +67,7 @@
       <button class="pill-btn" onclick="goTags()">⚙️ Tags</button>
       <button class="pill-btn" onclick="goUpload()">📥 Importar CSV</button>
       <button class="pill-btn" onclick="exportCsv()">📤 Exportar CSV</button>
+      <button class="pill-btn" id="logout-btn" onclick="doLogout()">🚪 Sair</button>
     </div>
     <div class="search-wrap">
       <span class="search-ico">🔍</span>
@@ -74,6 +104,7 @@
       <button class="pb-stop" onclick="stopPlay()">⏮</button>
       <button class="pb-play" id="play-btn" onclick="togglePlay()">▶</button>
       <button class="pb-tick-btn" id="tick-btn" onclick="toggleTick()" title="Tocar tick no ritmo do BPM">🔔</button>
+      <button class="pb-tick-btn" id="beat-btn" onclick="toggleBeatSound()" title="Tocar o som real da batida durante o play">🥁</button>
       <div class="dur-grp">
         <input class="dur-in" id="dur-in" type="text" value="3:30" oninput="onDurInInput(this.value)" onchange="onDurInChange(this.value)">
         <span class="dur-lbl" id="dur-lbl">Duração</span>
@@ -167,9 +198,23 @@
     <button class="drum-bar-btn" onclick="setDrumBars(4)" id="dbar-4">4</button>
     <button class="drum-play-btn" id="drum-play-btn" onclick="toggleDrumPlay()">▶ Preview</button>
   </div>
+  <div class="drum-toolbar">
+    <span class="drum-bars-lbl">Divisão:</span>
+    <select class="drum-subdiv-select" id="drum-subdiv-select" onchange="setDrumSubdivision(this.value)">
+      <option value="1">Semínimas (1 2 3 4)</option>
+      <option value="2">Colcheias (1 + 2 + 3 + 4 +)</option>
+      <option value="4">Semicolcheias (1 e + a...)</option>
+      <option value="3">Tercinas (1 tri plê...)</option>
+    </select>
+  </div>
+  <div class="drum-count-row" id="drum-count-row"></div>
   <div class="drum-legend-hint">Toque: vazio → nota → vazio  ·  Caixa: vazio → nota → <span class="ghost-dot"></span> ghost note (mais suave) → vazio</div>
   <div class="drum-grid-wrap">
     <div class="drum-grid" id="drum-grid"></div>
+  </div>
+  <div class="drum-preview">
+    <span class="drum-preview-lbl">Prévia do texto:</span>
+    <span class="drum-preview-text" id="drum-preview-text">—</span>
   </div>
   <div class="drum-foot">
     <button class="drum-clear-btn" onclick="clearDrum()">⌫ Limpar</button>
@@ -218,6 +263,21 @@
   </div>
 </div>
 
+<!-- ══ CONFIRMAÇÃO ═══════════════════════════════════ -->
+<div id="confirm-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-body">
+      <p class="confirm-modal-text" id="confirm-modal-text"></p>
+      <div class="confirm-modal-actions">
+        <button class="pill-btn" id="confirm-modal-cancel-btn">Cancelar</button>
+        <button class="pill-btn active" id="confirm-modal-ok-btn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#app-shell -->
+
 <script src="js/state.js"></script>
 <script src="js/tags.js"></script>
 <script src="js/csv.js"></script>
@@ -232,10 +292,8 @@
 <script src="js/synth.js"></script>
 <script src="js/drum.js"></script>
 <script src="js/csvWrite.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<script src="js/init.js"></script>
 <script src="js/firebase.js"></script>
 <script src="js/openai.js"></script>
-<script src="js/init.js"></script>
 </body>
 </html>
