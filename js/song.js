@@ -1,5 +1,6 @@
 // ════════════════════════════════════════════════════════
-//  SONG RENDER (redesigned)
+//  SONG RENDER — um bloco colorido por anotação, igual à
+//  planilha original (sem fundir seções sem letra na anterior).
 // ════════════════════════════════════════════════════════
 function renderSong(){
   if(!cur) return;
@@ -8,8 +9,7 @@ function renderSong(){
   syncFavBtn();
   manualDurVal=cur.duration||'3:30';
   document.getElementById('dur-in').value=manualDurVal;
-  playStartY=0;playStartSec=0;curElapsedSec=0; // nova música: play recomeça do topo até o usuário marcar um bloco
-  songBeatSections=[]; // blocos com pattern de bateria salvo, pra tocar o som real da batida no play
+  playStartSec=0;curElapsedSec=0; // nova música: play recomeça do topo até o usuário marcar um bloco
 
   // Legend
   const seen=new Map();
@@ -41,14 +41,15 @@ function renderSong(){
 
   // Parse annotation: split [TYPE (rhythm)] or [TYPE] (rhythm)
   function parseAnn(text){
-    // [TYPE] (rhythm) or [TYPE text (rhythm)]
     const mBracket=text.match(/^(\[[^\]]+\])\s*(.*)/);
     const type=mBracket?mBracket[1]:text;
     const rest=(mBracket?mBracket[2]:'').trim();
     return {type,rest};
   }
 
-  // Group items into sections: one ann header + its following lyric lines
+  // Group items into sections: one ann header + its following lyric lines.
+  // Cada seção vira seu próprio bloco na tela — igual à planilha original,
+  // onde cada [Tag] tem seu retângulo colorido, mesmo repetido em sequência.
   const sections=[];
   let sec=null;
   cur.items.forEach(item=>{
@@ -56,84 +57,72 @@ function renderSong(){
     else if(item.type==='lyric'){ if(!sec){sec={ann:null,lyrics:[]};sections.push(sec);} sec.lyrics.push(item); }
   });
 
-  // Sections with no lyrics inside join the block above, UNLESS their tag is the
-  // same as the section right above them — same-tag headers stay as their own card
-  // instead of stacking silently into the previous one.
-  // A header with no lyrics under it has nothing to box off, so it skips the
-  // (empty) body div and drops its border — it reads as a plain trailing label.
-  const blocks=[];
-  let lastTagKey=null;
-  // Timeline: how long each section lasts (bars × compasso ÷ BPM) drives which
-  // line gets the "now playing" highlight during playback. No BPM, no timeline.
-  let tSec=0,annIdx=0;
-  const beatPerBar=cur.beat||4;
+  blockMeta=[];
+  let annIdx=0;
   sections.forEach(s=>{
-    let headHtml='',color='#7fa37a',tagKey=null;
+    let headHtml='',color='#7fa37a',tx='#111';
     const noLyrics=s.lyrics.length===0;
-    const secDur=cur.bpm?((s.ann?.bars??1)*beatPerBar*60/cur.bpm):null;
+    let eb=null;
     if(s.ann){
       const cols=getAllCols(s.ann.text);
-      color=cols[0]?cols[0].bg:s.ann.bg;
-      tagKey=cols[0]?cols[0].k:null;
+      // Cor vinda de um import exato (ex: xlsx com a cor real da célula) manda
+      // sempre — a tag só decide a cor quando a anotação não trouxe uma própria.
+      if(s.ann.exact){ color=s.ann.bg; tx=s.ann.tx||contrastText(color); }
+      else { color=cols[0]?cols[0].bg:s.ann.bg; tx=cols[0]?cols[0].tx:(s.ann.tx||contrastText(color)); }
       const {type,rest}=parseAnn(s.ann.text);
-      const borderStyle=noLyrics?'':`;border-color:${color}66`;
-      // Bloco tem pattern de bateria salvo? Guarda o trecho da linha do tempo
-      // que ele ocupa pra tocar o som real da batida durante o play da música.
-      const eb=cur.edBlocks&&cur.edBlocks[annIdx];
-      if(eb&&eb.pattern&&secDur){
-        const totalSteps=(s.ann.bars??1)*beatPerBar*(eb.subdivision||1);
-        if(totalSteps>0) songBeatSections.push({t0:tSec,t1:tSec+secDur,pattern:eb.pattern,totalSteps,secPerStep:secDur/totalSteps});
-      }
+      eb=cur.edBlocks&&cur.edBlocks[annIdx];
       annIdx++;
-      // Every header gets a data-t0 anchor (for pixel↔tempo interpolation when a
-      // marked start point sits on it) but only a lyric-less header is a valid
-      // "now playing" highlight target (data-hl) — one with lyrics below just
-      // marks the section's start instant, zero-width, so it never gets picked.
-      const headT1=noLyrics?tSec+(secDur||0):tSec;
-      const headTimeAttr=secDur!==null?` data-t0="${tSec.toFixed(3)}" data-t1="${headT1.toFixed(3)}"${noLyrics?' data-hl="1"':''}`:'';
-      headHtml=`<div class="sheet-section-hd"${headTimeAttr} style="background:${color}22${borderStyle}"
-        onclick="setPlayStart(this)" title="Toque para começar o play a partir daqui">
-        <span class="sec-type" style="color:${color}">${boldify(type)}</span>
+      headHtml=`<div class="sheet-block-hd">
+        <span class="sec-type">${boldify(type)}</span>
         ${rest?`<span class="sec-rhythm">${boldify(rest)}</span>`:''}
       </div>`;
     }
-    const lineDur=(secDur!==null&&s.lyrics.length)?secDur/s.lyrics.length:null;
-    const lyricsHtml=s.lyrics.map((l,li)=>{
-      const timeAttr=lineDur!==null?` data-t0="${(tSec+li*lineDur).toFixed(3)}" data-t1="${(tSec+(li+1)*lineDur).toFixed(3)}" data-hl="1"`:'';
-      return `<div class="sheet-lyric-line"${timeAttr}>${boldify(l.text)}</div>`;
-    }).join('');
-    const bodyHtml=noLyrics?'':`<div class="sheet-section-body">${lyricsHtml}</div>`;
-    if(secDur!==null) tSec+=secDur;
-
-    const sameTagAsAbove=tagKey!==null&&tagKey===lastTagKey;
-    if(noLyrics && blocks.length && !sameTagAsAbove){
-      blocks[blocks.length-1].html+=headHtml+bodyHtml;
-    }else{
-      blocks.push({color,html:headHtml+bodyHtml});
-    }
-    lastTagKey=tagKey;
-  });
-  songTimelineSec=tSec;
-  blocks.forEach(b=>{
-    html+=`<div class="sheet-section" style="--sec-color:${b.color}">${b.html}</div>`;
+    const lyricsHtml=s.lyrics.map(l=>`<div class="sheet-block-lyric">${boldify(l.text)}</div>`).join('');
+    const bodyHtml=noLyrics?'':`<div class="sheet-block-body">${lyricsHtml}</div>`;
+    blockMeta.push({bars:s.ann?.bars??1,lineCount:(s.ann?1:0)+s.lyrics.length||1,eb,el:null,t0:0,t1:0,centerY:0});
+    html+=`<div class="sheet-block" style="background:${color};color:${tx}" onclick="setPlayStart(this)" title="Toque para começar o play a partir daqui">${headHtml}${bodyHtml}</div>`;
   });
 
   const body=document.getElementById('song-body');
   body.innerHTML=html;
-  body.scrollTop=0;
+  [...body.querySelectorAll('.sheet-block')].forEach((el,i)=>{blockMeta[i].el=el;});
+  syncBodyPadding();
+  computeTimeline();
+  buildBlockMap();
+  currentBlockIdx=-1;
   resetProg();
-  clearNowPlaying();
+  scrollToBlock(findBlockIdx(curElapsedSec),true);
+}
+
+// Padding vertical = metade da altura disponível de #song-body — é o que
+// deixa o primeiro e o último bloco chegarem ao centro da tela. Precisa
+// ser medido em JS: um padding em vh não sabe quanto espaço o cabeçalho e
+// a barra de play já tomaram, e um em % seria relativo à LARGURA da caixa
+// (regra do CSS para padding percentual), não à altura.
+function syncBodyPadding(){
+  const body=document.getElementById('song-body');if(!body)return;
+  body.style.paddingTop='0px';body.style.paddingBottom='0px';
+  const half=(body.clientHeight/2)+'px';
+  body.style.paddingTop=half;body.style.paddingBottom=half;
 }
 
 function applyFs(){
   document.documentElement.style.setProperty('--fs',fs+'px');
   const lbl=document.getElementById('fs-label');
   if(lbl)lbl.textContent=fs;
+  if(cur&&document.getElementById('screen-song')&&!document.getElementById('screen-song').classList.contains('hidden')){
+    syncBodyPadding();
+    buildBlockMap();
+    if(!playing) scrollToBlock(currentBlockIdx,true);
+  }
 }
 function adjFs(d){fs=Math.max(10,Math.min(34,fs+d));applyFs();saveAll();}
 
 // ════════════════════════════════════════════════════════
-//  SCROLL SPEED MODE — "Tempo" (duração manual) ou "BPM" (auto)
+//  SCROLL SPEED MODE — "Tempo" (duração manual) ou "BPM" (auto).
+//  Os dois alimentam a MESMA linha do tempo (computeTimeline): o
+//  que muda é só como o peso de cada bloco é medido — em compassos
+//  (BPM) ou em linhas de texto (Tempo, sem precisar de compasso).
 // ════════════════════════════════════════════════════════
 let manualDurVal='3:30'; // duração digitada no modo Tempo — independente da duração calculada no modo BPM
 function setScrollMode(mode){
@@ -142,8 +131,9 @@ function setScrollMode(mode){
   }
   scrollMode=mode;
   syncScrollModeUI();
+  computeTimeline();
 }
-function onDurInInput(v){manualDurVal=v;}
+function onDurInInput(v){manualDurVal=v;computeTimeline();}
 function onDurInChange(v){
   if(!cur||scrollMode!=='time')return;
   cur.duration=v;saveAll();fbSaveSong(cur);
@@ -177,4 +167,30 @@ function updateAutoDuration(){
   const beat=parseInt(document.getElementById('scroll-beat-in').value)||4;
   const sec=Math.round((bars*beat*60)/bpm);
   document.getElementById('dur-in').value=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  computeTimeline();
+}
+
+// ════════════════════════════════════════════════════════
+//  TIMELINE — reparte a duração total (dur-in) entre os blocos,
+//  proporcional ao peso de cada um: compassos no modo BPM, linhas
+//  de texto no modo Tempo. Roda toda vez que duração/modo/bpm muda,
+//  e de novo ao dar play — é o que faz o scroll saber onde centralizar.
+// ════════════════════════════════════════════════════════
+function computeTimeline(){
+  if(!cur||!blockMeta.length) return;
+  const totalDur=parseDur(document.getElementById('dur-in').value);
+  const beatPerBar=cur.beat||4;
+  const weights=blockMeta.map(m=>Math.max(0.001,scrollMode==='bpm'?(m.bars||1):m.lineCount));
+  const sumW=weights.reduce((a,b)=>a+b,0);
+  songBeatSections=[];
+  let acc=0;
+  blockMeta.forEach((m,i)=>{
+    const dur=totalDur*weights[i]/sumW;
+    m.t0=acc;m.t1=acc+dur;acc+=dur;
+    if(m.eb&&m.eb.pattern){
+      const totalSteps=(m.bars||1)*beatPerBar*(m.eb.subdivision||1);
+      if(totalSteps>0) songBeatSections.push({t0:m.t0,t1:m.t1,pattern:m.eb.pattern,totalSteps,secPerStep:dur/totalSteps});
+    }
+  });
+  songTimelineSec=acc;
 }

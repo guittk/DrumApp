@@ -182,15 +182,17 @@ textarea,input{font-family:inherit}
   border:1px solid transparent
 }
 
-/* ── SHEET BODY (redesigned) ─────────────────────────
-   Modern, dark music notation feel: rounded section
-   cards with a colored header (instrument + rhythm)
-   and clean lyric typography underneath.
-────────────────────────────────────────────────────── */
+/* ── SHEET BODY — cada bloco é chapado na cor original (igual à
+   planilha). O padding vertical é metade da ALTURA DISPONÍVEL da
+   própria caixa (calculado em JS por syncBodyPadding, não em vh —
+   vh é relativo à janela inteira, e uma altura de 50vh+50vh nessa
+   caixa estouraria o espaço que sobra abaixo do cabeçalho/playbar).
+   É esse padding que permite qualquer bloco, inclusive o primeiro e
+   o último, chegar ao centro da tela durante o play. ────────────── */
 #song-body{
   flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
   background:radial-gradient(ellipse at 50% 0%,#1a1f2680 0%,var(--bg-deep) 55%);
-  font-size:var(--fs);padding:6px 12px 40px;
+  font-size:var(--fs);padding:0 12px;
   -webkit-overflow-scrolling:touch
 }
 
@@ -217,49 +219,40 @@ textarea,input{font-family:inherit}
   /* background set inline */
 }
 
-/* Section card: groups one instrument header with its lyric lines */
-.sheet-section{
-  border-radius:14px;margin-bottom:12px;overflow:hidden;
-  background:linear-gradient(180deg,var(--sec-color,var(--accent))0c,var(--card)40%);
-  border:1px solid color-mix(in srgb, var(--sec-color,var(--accent)) 25%, var(--border));
-  box-shadow:0 4px 18px -8px rgba(0,0,0,.5)
-}
-.sheet-section-hd{
-  display:flex;align-items:baseline;gap:9px;
-  padding:9px 14px;
+/* Bloco: um por anotação, cor chapada de ponta a ponta — igual à
+   célula da planilha original, sem gradiente nem transparência. */
+.sheet-block{
+  border-radius:4px;margin-bottom:3px;overflow:hidden;
   font-family:var(--mono);
+  cursor:pointer;transition:box-shadow .15s,transform .15s;
+}
+.sheet-block-hd{
+  display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+  padding:8px 14px 6px;
   font-size:var(--fs);font-weight:700;
-  line-height:1.5;word-break:break-word;
-  border-bottom:1px solid transparent;
-  cursor:pointer;transition:box-shadow .15s;
-  /* background and border-color set inline */
+  line-height:1.4;word-break:break-word;
 }
-.sheet-section-hd.play-start-marker{box-shadow:inset 0 0 0 2px var(--accent)}
-.sheet-section-hd.play-start-marker::before{content:'▶';color:var(--accent);font-size:calc(var(--fs) - 3px)}
 .sec-type{font-weight:900;font-size:calc(var(--fs) + 1px)}
-.sec-rhythm{font-weight:500;font-size:calc(var(--fs) - 2px);opacity:.85;color:#b9c7b6}
-.sheet-section-hd strong{font-weight:900}
+.sec-rhythm{font-weight:500;font-size:calc(var(--fs) - 2px);opacity:.75}
+.sheet-block-hd strong,.sheet-block-lyric strong{font-weight:900}
 
-/* Lyric rows */
-.sheet-section-body{padding:2px 4px}
-.sheet-lyric-line{
-  padding:7px 14px 7px 18px;
+.sheet-block-body{padding:0 14px 8px}
+.sheet-block-lyric{
+  padding:4px 0;
   font-size:var(--fs);font-weight:400;
-  line-height:1.75;color:#DDD8CC;
+  line-height:1.65;
 }
-.sheet-lyric-line:not(:last-child){border-bottom:1px solid rgba(255,255,255,.04)}
-.sheet-lyric-line strong{font-weight:700;color:#fff}
+.sheet-block-lyric:not(:last-child){border-bottom:1px solid rgba(0,0,0,.1)}
 
-/* "Now playing" line, driven by BPM/compasso/compassos during playback.
-   .sheet-section-hd always carries an inline background (its instrument color),
-   which beats any class selector — !important is required here or a header
-   (the common case for lyric-less rhythm sections) never visibly highlights. */
-.sheet-lyric-line.now-playing,.sheet-section-hd.now-playing{
-  position:relative;
-  background:linear-gradient(90deg,color-mix(in srgb, var(--sec-color,var(--accent)) 30%, transparent),transparent) !important;
-  box-shadow:inset 3px 0 0 var(--sec-color,var(--accent))
+/* Bloco marcado pelo usuário pra iniciar o play a partir dali */
+.sheet-block.play-start-marker{box-shadow:inset 0 0 0 3px rgba(0,0,0,.55)}
+
+/* Bloco atualmente centralizado na tela durante o play — destaque sutil,
+   já que a centralização em si já deixa claro qual é o bloco atual. */
+.sheet-block.current{
+  box-shadow:0 0 0 3px var(--accent),0 8px 24px -8px rgba(0,0,0,.65);
+  transform:scale(1.015);position:relative;z-index:1;
 }
-.sheet-lyric-line.now-playing{color:#fff}
 
 /* ── PLAYBAR ─────────────────────────────────────────── */
 .playbar{
@@ -653,8 +646,9 @@ textarea,input{font-family:inherit}
   .legend-strip{padding:9px 14px;gap:7px}
   .leg-pill{padding:5px 12px 5px 9px}
   .leg-pill span:last-child{font-size:13px!important}
-  .sheet-section-hd{padding:11px 14px}
-  .sheet-lyric-line{padding:8px 14px 8px 18px;line-height:1.85}
+  .sheet-block-hd{padding:11px 14px 8px}
+  .sheet-block-body{padding:0 14px 11px}
+  .sheet-block-lyric{padding:6px 0;line-height:1.85}
   .playbar{padding:14px 14px;padding-bottom:max(18px,env(safe-area-inset-bottom))}
   .pb-row{gap:12px}
   .pb-stop{width:52px;height:52px;font-size:18px;border-radius:10px}

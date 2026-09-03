@@ -30,12 +30,10 @@ function diffLines(csvText,dbText){
 
 let csvImportFresh=[], csvImportConflicts=[], csvImportChoices={};
 
-function startCsvImport(text){
+function startImport(parsed,emptyMsg){
   const err=document.getElementById('up-err');
+  if(!parsed||!parsed.length){err.textContent=emptyMsg||'Nenhuma música encontrada.';err.style.display='block';return;}
   err.style.display='none';
-  let parsed;
-  try{parsed=parseCSV(text);}catch(ex){err.textContent=ex.message;err.style.display='block';return;}
-  if(!parsed.length){err.textContent='Nenhuma música encontrada.';err.style.display='block';return;}
 
   const byName=new Map(songs.map(s=>[s.name,s]));
   csvImportFresh=[];csvImportConflicts=[];csvImportChoices={};
@@ -52,14 +50,30 @@ function startCsvImport(text){
     showCsvDiffScreen();
   }
 }
+function startCsvImport(text){
+  const err=document.getElementById('up-err');
+  err.style.display='none';
+  let parsed;
+  try{parsed=parseCSV(text);}catch(ex){err.textContent=ex.message;err.style.display='block';return;}
+  startImport(parsed);
+}
+async function startXlsxImport(buf){
+  const err=document.getElementById('up-err');
+  err.style.display='none';
+  let parsed;
+  try{parsed=await parseXLSX(buf);}catch(ex){err.textContent=ex.message||'Erro ao ler o .xlsx.';err.style.display='block';return;}
+  startImport(parsed,'Nenhuma célula com [Tag] encontrada no .xlsx — confira se a planilha certa está visível no arquivo.');
+}
 function readFile(file){
   const err=document.getElementById('up-err');
   err.style.display='none';
-  if(!file||!file.name.toLowerCase().endsWith('.csv')){
-    err.textContent='Selecione um arquivo .CSV';err.style.display='block';return;
+  const name=(file&&file.name||'').toLowerCase();
+  if(!file||!(name.endsWith('.csv')||name.endsWith('.xlsx'))){
+    err.textContent='Selecione um arquivo .CSV ou .XLSX';err.style.display='block';return;
   }
   const reader=new FileReader();
-  reader.onload=e=>startCsvImport(decodeBuffer(e.target.result));
+  if(name.endsWith('.xlsx')) reader.onload=e=>startXlsxImport(e.target.result);
+  else reader.onload=e=>startCsvImport(decodeBuffer(e.target.result));
   reader.readAsArrayBuffer(file);
 }
 

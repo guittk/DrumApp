@@ -25,5 +25,15 @@ async function startApp(){
 // VH fix — most reliable iOS viewport height approach
 function setVH(){document.documentElement.style.setProperty('--vh',window.innerHeight*.01+'px');}
 setVH();
-window.addEventListener('resize',setVH);
-window.addEventListener('orientationchange',()=>setTimeout(setVH,120));
+
+// Reajusta o padding/mapa de centralização quando a altura disponível muda
+// (teclado virtual, rotação, redimensionar janela) — senão o bloco atual
+// sai do centro até a próxima renderização.
+function onViewportResize(){
+  setVH();
+  if(!cur||document.getElementById('screen-song').classList.contains('hidden'))return;
+  syncBodyPadding();buildBlockMap();
+  if(!playing) scrollToBlock(currentBlockIdx,true);
+}
+window.addEventListener('resize',onViewportResize);
+window.addEventListener('orientationchange',()=>setTimeout(onViewportResize,120));

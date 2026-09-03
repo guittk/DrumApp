@@ -47,12 +47,12 @@
     <div class="up-logo">THURGH</div>
     <div class="up-sub">Sheet de Bateria</div>
     <div class="drop-zone" id="drop-zone">
-      <input type="file" id="file-input" accept=".csv">
+      <input type="file" id="file-input" accept=".csv,.xlsx">
       <span class="drop-icon">🥁</span>
-      <div class="drop-text">Arraste o <strong>.CSV</strong> aqui ou clique para selecionar</div>
+      <div class="drop-text">Arraste o <strong>.CSV</strong> ou <strong>.XLSX</strong> aqui ou clique para selecionar</div>
       <span class="drop-btn">Selecionar arquivo</span>
     </div>
-    <div class="up-tip">O CSV será comparado com o <b>Database</b>. Se houver divergências, você escolhe qual versão manter.</div>
+    <div class="up-tip">O arquivo será comparado com o <b>Database</b>. Se houver divergências, você escolhe qual versão manter. O <b>.XLSX</b> traz a cor exata de cada célula; o .CSV usa as tags configuradas.</div>
     <div id="up-err"></div>
   </div>
 </div>
@@ -281,6 +281,7 @@
 <script src="js/state.js"></script>
 <script src="js/tags.js"></script>
 <script src="js/csv.js"></script>
+<script src="js/xlsx.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/navigation.js"></script>
 <script src="js/fileLoading.js"></script>

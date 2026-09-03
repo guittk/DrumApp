@@ -1,26 +1,64 @@
 // ════════════════════════════════════════════════════════
-//  PLAYBACK
+//  PLAYBACK — o bloco atual fica centralizado na tela (o de cima
+//  e os próximos ficam visíveis, sem precisar rolar manualmente).
+//  Só desliza quando troca de bloco; enquanto o bloco não termina,
+//  a tela fica parada — mais fácil de ler do que scroll contínuo.
 // ════════════════════════════════════════════════════════
 function parseDur(s){s=(s||'3:30').trim();const p=s.split(':');if(p.length===2)return Math.max(1,parseInt(p[0]||0)*60+parseInt(p[1]||0));return Math.max(1,parseFloat(s)*60||210);}
 function fmt(sec){sec=Math.max(0,Math.round(sec));return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;}
 function resetProg(){document.getElementById('prog-fill').style.width='0%';document.getElementById('pb-el').textContent='0:00';document.getElementById('pb-rem').textContent='';}
 function updateProg(pct,dur){pct=Math.max(0,Math.min(1,pct));document.getElementById('prog-fill').style.width=(pct*100).toFixed(1)+'%';document.getElementById('pb-el').textContent=fmt(pct*dur);document.getElementById('pb-rem').textContent='-'+fmt((1-pct)*dur);}
 function togglePlay(){playing?pausePlay():startPlay();}
-function startPlay(){
+
+// ── Mapa bloco → posição na tela (recalculado sempre que o layout
+//    muda: nova música, fonte, redimensionamento). Usa getBoundingClientRect
+//    em vez de offsetTop: #song-body é position:static, então offsetTop dos
+//    blocos seria relativo ao <body> da página (incluindo o cabeçalho fixo
+//    acima do scroll), não ao próprio #song-body — descentralizaria tudo
+//    por exatamente a altura do cabeçalho+legenda. ──────────────────────
+function buildBlockMap(){
   const body=document.getElementById('song-body');if(!body)return;
-  const total=body.scrollHeight-body.clientHeight;if(total<10)return;
+  const bodyTop=body.getBoundingClientRect().top-body.scrollTop;
+  blockMeta.forEach(m=>{
+    if(!m.el)return;
+    const r=m.el.getBoundingClientRect();
+    m.centerY=(r.top-bodyTop)+r.height/2;
+  });
+}
+function findBlockIdx(t){
+  if(!blockMeta.length) return -1;
+  for(let i=0;i<blockMeta.length;i++){ if(t<blockMeta[i].t1||i===blockMeta.length-1) return i; }
+  return blockMeta.length-1;
+}
+function scrollToBlock(idx,instant){
+  if(idx<0||!blockMeta[idx])return;
+  const body=document.getElementById('song-body');if(!body)return;
+  const maxTop=Math.max(0,body.scrollHeight-body.clientHeight);
+  const target=Math.max(0,Math.min(blockMeta[idx].centerY-body.clientHeight/2,maxTop));
+  if(instant) body.scrollTop=target;
+  else body.scrollTo({top:target,behavior:'smooth'});
+  setCurrentBlock(idx);
+}
+function setCurrentBlock(idx){
+  if(idx===currentBlockIdx)return;
+  document.querySelectorAll('#song-body .sheet-block.current').forEach(e=>e.classList.remove('current'));
+  if(idx>=0&&blockMeta[idx]&&blockMeta[idx].el) blockMeta[idx].el.classList.add('current');
+  currentBlockIdx=idx;
+}
+
+function startPlay(){
+  const body=document.getElementById('song-body');if(!body||!blockMeta.length)return;
+  computeTimeline();buildBlockMap();
   const dur=parseDur(document.getElementById('dur-in').value);
-  if(body.scrollTop>=total-4)body.scrollTop=playStartY;
-  const curY=body.scrollTop,frac=curY/total,timeLeft=Math.max(0.5,dur*(1-frac));
-  ps={startTime:performance.now(),startScroll:curY,totalScroll:total,durSec:dur,speed:(total-curY)/timeLeft,startSec:curElapsedSec};
+  if(curElapsedSec>=dur-0.05) curElapsedSec=playStartSec; // já tinha chegado no fim — recomeça do bloco marcado
+  ps={startTime:performance.now(),startSec:curElapsedSec,durSec:dur};
   playing=true;
   const btn=document.getElementById('play-btn');
   btn.textContent='⏸';
   const bpm=parseInt(document.getElementById('scroll-bpm-in').value)||100;
   btn.style.animationDuration=(60/bpm)+'s';
   btn.classList.add('beating');
-  buildTimedEls();
-  if(songTimelineSec>0) highlightNowPlaying(ps.startSec);
+  scrollToBlock(findBlockIdx(curElapsedSec),false);
   if(tickEnabled) startTickScheduler();
   if(beatSoundEnabled) startBeatScheduler();
   if(rafId)cancelAnimationFrame(rafId);rafId=requestAnimationFrame(rafLoop);
@@ -34,80 +72,37 @@ function pausePlay(){
 }
 function stopPlay(){
   pausePlay();
-  const body=document.getElementById('song-body');if(body)body.scrollTop=playStartY;
-  ps=null;curElapsedSec=playStartSec;resetProg();
-  // Destaque só aparece com um bloco selecionado (marcado) ou tocando — parar
-  // sem marcador nenhum não deve deixar nenhuma linha destacada.
-  if(document.querySelector('.play-start-marker')&&songTimelineSec>0){
-    buildTimedEls();highlightNowPlaying(playStartSec);
-  }else{
-    clearNowPlaying();
-  }
+  curElapsedSec=playStartSec;resetProg();
+  if(blockMeta.length){computeTimeline();buildBlockMap();scrollToBlock(findBlockIdx(curElapsedSec),true);}
 }
 
 // ── Marcar de onde o play deve começar (ex: ensaiar um bloco específico) ──
-// playStartSec vem do próprio data-t0 do elemento (a real linha do tempo por
-// BPM/compasso/compassos), não de uma estimativa por posição de pixel.
+// playStartSec vem do próprio data-t0 do bloco (a linha do tempo atual,
+// BPM ou Tempo — as duas alimentam o mesmo computeTimeline).
 function setPlayStart(el){
-  const body=document.getElementById('song-body');if(!body)return;
   const already=el.classList.contains('play-start-marker');
-  document.querySelectorAll('.sheet-section-hd.play-start-marker').forEach(e=>e.classList.remove('play-start-marker'));
+  document.querySelectorAll('.sheet-block.play-start-marker').forEach(e=>e.classList.remove('play-start-marker'));
+  const idx=blockMeta.findIndex(m=>m.el===el);
   if(already){
-    playStartY=0;playStartSec=0;curElapsedSec=0;
-    if(!playing){body.scrollTop=0;clearNowPlaying();}
+    playStartSec=0;curElapsedSec=0;
+    if(!playing) scrollToBlock(0,true);
     return;
   }
   el.classList.add('play-start-marker');
-  const rect=el.getBoundingClientRect(),bodyRect=body.getBoundingClientRect();
-  const titleH=document.querySelector('.sheet-title')?.offsetHeight||300;
-  playStartY=Math.max(0,body.scrollTop+(rect.top-bodyRect.top)-titleH);
-  playStartSec=el.dataset.t0?+el.dataset.t0:0;
+  playStartSec=idx>=0?blockMeta[idx].t0:0;
   curElapsedSec=playStartSec;
-  if(!playing){
-    body.scrollTop=playStartY;
-    if(songTimelineSec>0){buildTimedEls();highlightNowPlaying(playStartSec);}
-  }
+  if(!playing) scrollToBlock(idx,true);
 }
 function rafLoop(now){
   if(!playing||!ps)return;
-  const body=document.getElementById('song-body');if(!body){playing=false;return;}
-  const elapsed=(now-ps.startTime)/1000,newY=ps.startScroll+ps.speed*elapsed;
-  const frac=newY/ps.totalScroll;
-  body.scrollTop=newY;updateProg(frac,ps.durSec);
-  curElapsedSec=ps.startSec+elapsed;
-  if(songTimelineSec>0) highlightNowPlaying(curElapsedSec);
-  if(newY>=ps.totalScroll-1){pausePlay();updateProg(1,ps.durSec);return;}
+  curElapsedSec=ps.startSec+(now-ps.startTime)/1000;
+  const idx=findBlockIdx(curElapsedSec);
+  if(idx!==currentBlockIdx) scrollToBlock(idx,false);
+  updateProg(curElapsedSec/ps.durSec,ps.durSec);
+  if(curElapsedSec>=ps.durSec){pausePlay();updateProg(1,ps.durSec);return;}
   rafId=requestAnimationFrame(rafLoop);
 }
 
-// ── "Now playing" line highlight — avança no ritmo real do BPM/compasso/
-//    compassos (tempo real decorrido), não pela fração de pixels rolados.
-//    Isso funciona igual seja o play iniciado do topo ou de um bloco marcado. ──
-let timedEls=null,nowPlayingIdx=-1;
-function buildTimedEls(){
-  timedEls=[...document.querySelectorAll('#song-body [data-t0]')].map(el=>
-    ({el,t0:+el.dataset.t0,t1:+el.dataset.t1,hl:el.dataset.hl==='1'}));
-  nowPlayingIdx=-1;
-}
-function highlightNowPlaying(elapsedSec){
-  if(!timedEls||!timedEls.length)return;
-  const hlEls=timedEls.filter(t=>t.hl);
-  if(!hlEls.length)return;
-  let match=hlEls.find(t=>elapsedSec>=t.t0&&elapsedSec<t.t1);
-  if(!match&&elapsedSec>=hlEls[hlEls.length-1].t1) match=hlEls[hlEls.length-1];
-  if(!match&&elapsedSec<hlEls[0].t0) match=hlEls[0];
-  const idx=match?timedEls.indexOf(match):-1;
-  if(idx===nowPlayingIdx)return;
-  // Limpa QUALQUER linha destacada no DOM (não só a rastreada em nowPlayingIdx)
-  // pra garantir que nunca fique mais de uma linha em destaque ao mesmo tempo.
-  document.querySelectorAll('#song-body .now-playing').forEach(e=>e.classList.remove('now-playing'));
-  if(idx>=0) timedEls[idx].el.classList.add('now-playing');
-  nowPlayingIdx=idx;
-}
-function clearNowPlaying(){
-  document.querySelectorAll('#song-body .now-playing').forEach(e=>e.classList.remove('now-playing'));
-  timedEls=null;nowPlayingIdx=-1;
-}
 // ── Tick de metrônomo, no ritmo do BPM (mesmo intervalo do play-btn piscando) ──
 let tickTimerId=null,tickNextTime=0,tickBeatCount=0;
 function toggleTick(){
@@ -179,12 +174,12 @@ function scheduleBeatSound(){
 }
 
 function seekClick(e){
+  if(!blockMeta.length)return;
   const rect=e.currentTarget.getBoundingClientRect();
   const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
-  const body=document.getElementById('song-body');if(!body)return;
-  body.scrollTop=pct*(body.scrollHeight-body.clientHeight);
   const dur=parseDur(document.getElementById('dur-in').value);
+  curElapsedSec=pct*dur;
   updateProg(pct,dur);
-  curElapsedSec=songTimelineSec>0?pct*songTimelineSec:0;
+  scrollToBlock(findBlockIdx(curElapsedSec),true);
   if(playing){pausePlay();startPlay();}
 }
