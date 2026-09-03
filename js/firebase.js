@@ -3,8 +3,8 @@
 //  já funciona em Finanças e Fluência. Dados ficam em
 //  /users/{uid}/Bateria, isolados por conta mas no mesmo projeto.
 // ════════════════════════════════════════════════════════
-const FIREBASE_API_KEY='AIzaSyAQqB__M-gKZWHS4zQ1eIA-X6rGqzVtr0I';
-const FIREBASE_DB_URL='https://anki-71f4f-default-rtdb.firebaseio.com';
+const FIREBASE_API_KEY='AIzaSyAkNtMewsDzOQZLSLq4_x4yx_QXu3sPagg';
+const FIREBASE_DB_URL='https://basehub-135f5-default-rtdb.firebaseio.com';
 const SESSION_KEY='thurgh_session';
 
 let session=null; // {idToken, uid, email, expiresAt}
